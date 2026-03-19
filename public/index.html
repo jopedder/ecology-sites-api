@@ -207,6 +207,11 @@
     <div id="errorMsg" class="error-msg hidden"></div>
     <div id="siteCards"></div>
     <div id="allClear" class="all-clear hidden">✅ No designated sites found within this radius.</div>
+   <button id="downloadBtn" onclick="downloadCSV()" class="hidden" style="
+  width:100%; padding:9px; border:none; border-radius:8px; margin-bottom:10px;
+  font-size:13px; font-weight:600; cursor:pointer;
+  background:#f0fdf4; color:#166534; border:1px solid #86efac;
+">⬇ Download results as CSV</button>
     <div class="footer" id="footer" class="hidden">
       Data: Natural England ArcGIS FeatureServer · Distances to site centroid · Always verify against MAGIC for definitive boundaries
     </div>
@@ -321,7 +326,7 @@
     try {
       const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-
+window.lastSearchData = data;
       if (!data || data.length === 0) {
         resultEl.className = "geocode-result error";
         resultEl.textContent = "Address not found — try a more specific search, e.g. add town or county.";
@@ -445,6 +450,7 @@
       show("countBadge");
       if (totalFound === 0) show("allClear");
       show("footer");
+show("downloadBtn");
 
     } catch (e) {
       hide("loading");
@@ -462,6 +468,30 @@
   document.getElementById("coords").addEventListener("keydown", e => {
     if (e.key === "Enter") runSearchFromCoords();
   });
+  function downloadCSV() {
+  const rows = [["Designation", "Site Name", "Status", "Distance"]];
+  DESIGNATIONS.forEach(des => {
+    const features = document.querySelectorAll(`#siteCards .site-row`);
+  });
+
+  // Rebuild from last search data
+  if (!window.lastSearchData) return;
+  DESIGNATIONS.forEach(des => {
+    (window.lastSearchData[des.id] || []).forEach(f => {
+      const dist = f.distanceM != null
+        ? (f.distanceM < 1000 ? `${f.distanceM}m` : `${(f.distanceM/1000).toFixed(1)}km`)
+        : "";
+      rows.push([des.fullName, f.name, f.status || "", dist]);
+    });
+  });
+
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `protected-sites-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
 </script>
 </body>
 </html>
