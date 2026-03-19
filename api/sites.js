@@ -46,6 +46,10 @@ const LAYERS = [
     nameField: "LNR_NAME",
     descFields: ["REASON", "DESCRIPTION", "LNR_DESC", "DESIGNATION_REASON"],
     linkField: "HYPERLINK",
+  },{
+    id: "pspa",
+    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Potential_Special_Protection_Areas_England/FeatureServer/0/query",
+    nameField: "SPA_NAME",
   },
 ];
 
