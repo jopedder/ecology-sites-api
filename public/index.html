@@ -30,26 +30,67 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
 
+    /* Tab switcher */
+    .tabs {
+      display: flex; gap: 0; margin-bottom: 14px;
+      border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;
+    }
+    .tab {
+      flex: 1; padding: 8px; font-size: 13px; font-weight: 600;
+      text-align: center; cursor: pointer; background: #f9fafb;
+      color: #6b7280; border: none; transition: all 0.15s;
+    }
+    .tab.active { background: white; color: #111827; box-shadow: inset 0 -2px 0 #1e40af; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
     .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
     .field { display: flex; flex-direction: column; gap: 4px; }
     .field.grow { flex: 1; min-width: 200px; }
     .field.fixed { width: 140px; }
     label { font-size: 11px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
+
     input, select {
       padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 7px;
       font-size: 14px; outline: none; width: 100%;
       transition: border-color 0.15s;
     }
-    input { font-family: monospace; }
     input:focus, select:focus { border-color: #6366f1; }
+    input.coords-input { font-family: monospace; }
 
-    button {
+    /* Address search row */
+    .addr-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .addr-row input { flex: 1; }
+    .addr-btn {
+      padding: 9px 14px; border: none; border-radius: 7px;
+      font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+      background: #f3f4f6; color: #374151; transition: background 0.15s;
+    }
+    .addr-btn:hover { background: #e5e7eb; }
+    .addr-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Geocode result */
+    .geocode-result {
+      font-size: 12px; margin-bottom: 10px; padding: 8px 10px;
+      border-radius: 6px; display: none;
+    }
+    .geocode-result.success { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+    .geocode-result.error { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+
+    /* Resolved coords display */
+    .resolved-coords {
+      font-size: 12px; color: #6b7280; margin-bottom: 10px;
+      padding: 6px 10px; background: #f9fafb; border-radius: 6px;
+      border: 1px solid #e5e7eb; display: none; font-family: monospace;
+    }
+
+    button.search-btn {
       width: 100%; padding: 11px; border: none; border-radius: 8px;
       font-size: 14px; font-weight: 600; cursor: pointer;
       background: linear-gradient(135deg, #166534, #1e40af);
       color: white; transition: opacity 0.15s;
     }
-    button:disabled { background: #9ca3af; cursor: not-allowed; }
+    button.search-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 
     .results-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -61,7 +102,6 @@
     .count-badge.found { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
     .count-badge.clear { background: #f0fdf4; color: #166534; border-color: #86efac; }
 
-    /* Site card */
     .site-card {
       border-radius: 8px; margin-bottom: 8px; overflow: hidden;
       border: 1px solid; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -78,7 +118,6 @@
     .site-card-body { background: white; }
     .site-row { padding: 10px 14px; border-top: 1px solid #f3f4f6; font-size: 13px; }
     .site-row:first-child { border-top: none; }
-
     .site-row-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .site-name { font-weight: 600; color: #111827; }
     .site-distance {
@@ -91,7 +130,6 @@
     .site-link { display: inline-block; margin-top: 5px; font-size: 12px; color: #1e40af; text-decoration: none; }
     .site-link:hover { text-decoration: underline; }
 
-    /* None card */
     .none-card {
       border: 1px solid #e5e7eb; border-left: 4px solid #d1d5db;
       border-radius: 8px; margin-bottom: 6px;
@@ -109,7 +147,7 @@
       animation: spin 0.8s linear infinite;
     }
 
-    .error {
+    .error-msg {
       background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px;
       padding: 12px 14px; font-size: 13px; color: #dc2626; margin-bottom: 10px;
     }
@@ -132,24 +170,61 @@
   <p class="subtitle">Queries Natural England for SSSI, SAC, SPA, Ramsar and LNR within your chosen radius.</p>
 
   <div class="panel">
-    <div class="form-row">
-      <div class="field grow">
-        <label>Coordinates (lat, lng)</label>
-        <input type="text" id="coords" value="52.231023515573476,-1.7135285346788143" placeholder="52.231023, -1.713528" />
-      </div>
-      <div class="field fixed">
-        <label>Radius</label>
-        <select id="radius">
-          <option value="500">500 m</option>
-          <option value="1000" selected>1,000 m</option>
-          <option value="2000">2,000 m</option>
-          <option value="5000">5,000 m</option>
-        </select>
-      </div>
+
+    <!-- Tab switcher -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('coords')">📍 Coordinates</button>
+      <button class="tab" onclick="switchTab('address')">🔎 Address search</button>
     </div>
-    <button id="searchBtn" onclick="runSearch()">🔍 Search</button>
+
+    <!-- Coordinates tab -->
+    <div class="tab-panel active" id="tab-coords">
+      <div class="form-row">
+        <div class="field grow">
+          <label>Coordinates (lat, lng)</label>
+          <input type="text" id="coords" class="coords-input" value="52.23102,-1.71353" placeholder="52.23102, -1.71353" />
+        </div>
+        <div class="field fixed">
+          <label>Radius</label>
+          <select id="radius-coords">
+            <option value="500">500 m</option>
+            <option value="1000" selected>1,000 m</option>
+            <option value="2000">2,000 m</option>
+            <option value="5000">5,000 m</option>
+          </select>
+        </div>
+      </div>
+      <button class="search-btn" id="searchBtnCoords" onclick="runSearchFromCoords()">🔍 Search</button>
+    </div>
+
+    <!-- Address tab -->
+    <div class="tab-panel" id="tab-address">
+      <div class="field" style="margin-bottom:10px">
+        <label>Address or place name</label>
+        <div class="addr-row">
+          <input type="text" id="addressInput" placeholder="e.g. Snitterfield, Warwickshire" onkeydown="if(event.key==='Enter') geocodeAddress()" />
+          <button class="addr-btn" id="geocodeBtn" onclick="geocodeAddress()">Find</button>
+        </div>
+      </div>
+      <div class="geocode-result" id="geocodeResult"></div>
+      <div class="resolved-coords" id="resolvedCoords"></div>
+      <div class="form-row">
+        <div class="field fixed">
+          <label>Radius</label>
+          <select id="radius-address">
+            <option value="500">500 m</option>
+            <option value="1000" selected>1,000 m</option>
+            <option value="2000">2,000 m</option>
+            <option value="5000">5,000 m</option>
+          </select>
+        </div>
+      </div>
+      <button class="search-btn" id="searchBtnAddress" onclick="runSearchFromAddress()" disabled>🔍 Search</button>
+    </div>
+
   </div>
 
+  <!-- Results -->
   <div id="results" class="hidden">
     <div class="results-header">
       <span class="results-label" id="resultsLabel"></span>
@@ -159,11 +234,11 @@
       <div class="spinner"></div>
       Fetching from Natural England ArcGIS…
     </div>
-    <div id="errorMsg" class="error hidden"></div>
+    <div id="errorMsg" class="error-msg hidden"></div>
     <div id="siteCards"></div>
     <div id="allClear" class="all-clear hidden">✅ No designated sites found within this radius.</div>
     <div class="footer" id="footer" class="hidden">
-      Data: Natural England ArcGIS FeatureServer · Distances are to site centroid · Always verify against MAGIC for definitive boundaries
+      Data: Natural England ArcGIS FeatureServer · Distances to site centroid · Always verify against MAGIC for definitive boundaries
     </div>
   </div>
 
@@ -177,11 +252,73 @@
     { id: "lnr",    label: "LNR",    fullName: "Local Nature Reserve",                color: "#b45309", bg: "#fffbeb" },
   ];
 
-  function formatDist(m) {
-    if (m == null) return null;
-    return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;
+  let geocodedLat = null;
+  let geocodedLng = null;
+
+  // ── Tab switching ────────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.getElementById("tab-" + tab).classList.add("active");
+    event.target.classList.add("active");
   }
 
+  // ── Geocoding via Nominatim ──────────────────────────────────────────────────
+  async function geocodeAddress() {
+    const query = document.getElementById("addressInput").value.trim();
+    if (!query) return;
+
+    const btn = document.getElementById("geocodeBtn");
+    const resultEl = document.getElementById("geocodeResult");
+    const coordsEl = document.getElementById("resolvedCoords");
+
+    btn.disabled = true;
+    btn.textContent = "…";
+    resultEl.style.display = "none";
+    coordsEl.style.display = "none";
+    geocodedLat = null;
+    geocodedLng = null;
+    document.getElementById("searchBtnAddress").disabled = true;
+
+    try {
+      // Nominatim — free OSM geocoder, bias to UK
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=gb&limit=1&format=json`;
+      const res = await fetch(url, {
+        headers: { "Accept-Language": "en", "User-Agent": "ProtectedSitesFinder/1.0" }
+      });
+      const data = await res.json();
+
+      if (!data || data.length === 0) {
+        resultEl.className = "geocode-result error";
+        resultEl.textContent = "Address not found — try a more specific search, e.g. add town or county.";
+        resultEl.style.display = "block";
+        return;
+      }
+
+      const place = data[0];
+      geocodedLat = parseFloat(place.lat);
+      geocodedLng = parseFloat(place.lon);
+
+      resultEl.className = "geocode-result success";
+      resultEl.textContent = `✓ Found: ${place.display_name}`;
+      resultEl.style.display = "block";
+
+      coordsEl.textContent = `Coordinates: ${geocodedLat.toFixed(5)}, ${geocodedLng.toFixed(5)}`;
+      coordsEl.style.display = "block";
+
+      document.getElementById("searchBtnAddress").disabled = false;
+
+    } catch (e) {
+      resultEl.className = "geocode-result error";
+      resultEl.textContent = "Geocoding failed — check your connection and try again.";
+      resultEl.style.display = "block";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Find";
+    }
+  }
+
+  // ── Search runners ───────────────────────────────────────────────────────────
   function parseCoords(val) {
     const parts = val.trim().split(",").map(s => parseFloat(s.trim()));
     if (parts.length !== 2 || parts.some(isNaN)) return null;
@@ -191,16 +328,22 @@
     return null;
   }
 
-  function show(id) { document.getElementById(id).classList.remove("hidden"); }
-  function hide(id) { document.getElementById(id).classList.add("hidden"); }
-
-  async function runSearch() {
+  function runSearchFromCoords() {
     const coords = parseCoords(document.getElementById("coords").value);
-    if (!coords) { alert("Invalid coordinates — use: lat, lng"); return; }
-    const radius = document.getElementById("radius").value;
-    const { lat, lng } = coords;
+    if (!coords) { alert("Invalid coordinates — use: lat, lng e.g. 52.23102, -1.71353"); return; }
+    const radius = document.getElementById("radius-coords").value;
+    runSearch(coords.lat, coords.lng, radius, "searchBtnCoords");
+  }
 
-    const btn = document.getElementById("searchBtn");
+  function runSearchFromAddress() {
+    if (geocodedLat == null || geocodedLng == null) { alert("Please find an address first."); return; }
+    const radius = document.getElementById("radius-address").value;
+    runSearch(geocodedLat, geocodedLng, radius, "searchBtnAddress");
+  }
+
+  // ── Core search ──────────────────────────────────────────────────────────────
+  async function runSearch(lat, lng, radius, btnId) {
+    const btn = document.getElementById(btnId);
     btn.disabled = true;
     btn.textContent = "⏳ Searching…";
 
@@ -211,7 +354,7 @@
     hide("countBadge");
     document.getElementById("siteCards").innerHTML = "";
     document.getElementById("resultsLabel").innerHTML =
-      `Results within ${(radius/1000).toFixed(1)} km of <code>${lat.toFixed(6)}, ${lng.toFixed(6)}</code>`;
+      `Results within ${(radius/1000).toFixed(1)} km of <code>${lat.toFixed(5)}, ${lng.toFixed(5)}</code>`;
 
     try {
       const res = await fetch(`/api/sites?lat=${lat}&lng=${lng}&radius=${radius}`);
@@ -234,7 +377,9 @@
         }
 
         const rows = features.map(f => {
-          const dist = formatDist(f.distanceM);
+          const dist = f.distanceM != null
+            ? (f.distanceM < 1000 ? `${f.distanceM} m` : `${(f.distanceM/1000).toFixed(1)} km`)
+            : null;
           return `
             <div class="site-row">
               <div class="site-row-top">
@@ -278,8 +423,11 @@
     }
   }
 
+  function show(id) { document.getElementById(id).classList.remove("hidden"); }
+  function hide(id) { document.getElementById(id).classList.add("hidden"); }
+
   document.getElementById("coords").addEventListener("keydown", e => {
-    if (e.key === "Enter") runSearch();
+    if (e.key === "Enter") runSearchFromCoords();
   });
 </script>
 </body>
