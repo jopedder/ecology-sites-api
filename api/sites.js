@@ -1,4 +1,3 @@
-// Haversine distance in metres between two WGS84 points
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const toRad = d => (d * Math.PI) / 180;
@@ -15,41 +14,37 @@ const LAYERS = [
     id: "sssi",
     url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SSSI_England/FeatureServer/0/query",
     nameField: "SSSI_NAME",
-    // Fields to try for description, in priority order — from NE ArcGIS schema
     descFields: ["NOTIFIED_FEATURES", "REASON", "FEATURES", "DESIGNATION_REASON"],
-    linkField: "HYPERLINK",
   },
   {
     id: "sac",
-    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SAC_England/FeatureServer/0/query",
+    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Special_Areas_of_Conservation_England/FeatureServer/0/query",
     nameField: "SAC_NAME",
     descFields: ["QUALIFYING_HABITATS", "REASON", "QUALIFYING_FEATURES", "CITATION"],
-    linkField: "HYPERLINK",
   },
   {
     id: "spa",
-    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/SPA_England/FeatureServer/0/query",
+    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Special_Protection_Areas_England/FeatureServer/0/query",
     nameField: "SPA_NAME",
     descFields: ["QUALIFYING_SPECIES", "REASON", "QUALIFYING_FEATURES", "CITATION"],
-    linkField: "HYPERLINK",
+  },
+  {
+    id: "pspa",
+    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Potential_Special_Protection_Areas_England/FeatureServer/0/query",
+    nameField: "SPA_NAME",
+    descFields: ["QUALIFYING_SPECIES", "REASON", "QUALIFYING_FEATURES"],
   },
   {
     id: "ramsar",
     url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Ramsar_England/FeatureServer/0/query",
     nameField: "NAME",
     descFields: ["REASON", "CRITERIA", "RAMSAR_CRITERIA", "CITATION"],
-    linkField: "HYPERLINK",
   },
   {
     id: "lnr",
     url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Local_Nature_Reserves_England/FeatureServer/0/query",
     nameField: "LNR_NAME",
     descFields: ["REASON", "DESCRIPTION", "LNR_DESC", "DESIGNATION_REASON"],
-    linkField: "HYPERLINK",
-  },{
-    id: "pspa",
-    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Potential_Special_Protection_Areas_England/FeatureServer/0/query",
-    nameField: "SPA_NAME",
   },
 ];
 
@@ -57,7 +52,6 @@ function extractDesc(attrs, descFields) {
   for (const f of descFields) {
     const val = attrs[f];
     if (val && typeof val === "string" && val.trim().length > 0) {
-      // Truncate to a single sentence — take text up to the first full stop
       const firstSentence = val.split(/\.(\s|$)/)[0];
       return firstSentence.trim() + (firstSentence.endsWith(".") ? "" : ".");
     }
@@ -87,8 +81,8 @@ export default async function handler(req, res) {
     units: "esriSRUnit_Meter",
     outFields: "*",
     returnGeometry: "false",
-    returnCentroid: "true",   // returns centroid of each polygon
-    outSR: "4326",            // centroid coords in WGS84
+    returnCentroid: "true",
+    outSR: "4326",
     f: "json",
   });
 
@@ -102,30 +96,16 @@ export default async function handler(req, res) {
 
         results[layer.id] = (data.features || []).map((f) => {
           const a = f.attributes || {};
-
-          // Name
-          const name =
-            a[layer.nameField] || a.NAME || a.SITE_NAME || "Unnamed site";
-
-          // Status
+          const name = a[layer.nameField] || a.NAME || a.SITE_NAME || "Unnamed site";
           const status = a.STATUS || a.CATEGORY || "";
-
-          // Description — only from actual API fields, never invented
           const description = extractDesc(a, layer.descFields);
-
-          // Distance — from centroid if available
           let distanceM = null;
           if (f.centroid && f.centroid.x != null && f.centroid.y != null) {
             distanceM = haversine(searchLat, searchLng, f.centroid.y, f.centroid.x);
           }
-
-          // Government link — from HYPERLINK field in NE data
-          const link = a[layer.linkField] || null;
-
-          return { name, status, description, distanceM, link };
+          return { name, status, description, distanceM };
         });
 
-        // Sort by distance if available
         results[layer.id].sort((a, b) => {
           if (a.distanceM == null) return 1;
           if (b.distanceM == null) return -1;
@@ -140,4 +120,3 @@ export default async function handler(req, res) {
 
   return res.status(200).json(results);
 }
-
