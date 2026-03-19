@@ -274,6 +274,7 @@
   }
   geocodedLat = pos.lat;
   geocodedLng = pos.lng;
+      document.getElementById("coords").value = `${pos.lat.toFixed(5)},${pos.lng.toFixed(5)}`;
   document.getElementById("resolvedCoords").textContent =
     `Coordinates: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
   mapPin.setPopupContent(`<b>Search point</b><br>${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
