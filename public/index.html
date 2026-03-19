@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Protected Sites Finder</title>
 
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -13,13 +12,10 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-      min-height: 100vh;
-      padding: 24px 16px;
+      background: #f3f4f6; color: #111827;
+      min-height: 100vh; padding: 24px 16px;
     }
     .wrap { max-width: 700px; margin: 0 auto; }
-
     .header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
     .logo {
       width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
@@ -28,13 +24,11 @@
     }
     h1 { font-size: 20px; font-weight: 700; }
     .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 20px; margin-top: 4px; }
-
     .panel {
       background: white; border: 1px solid #e5e7eb;
       border-radius: 12px; padding: 18px; margin-bottom: 18px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
-
     .tabs {
       display: flex; margin-bottom: 14px;
       border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;
@@ -47,7 +41,6 @@
     .tab.active { background: white; color: #111827; box-shadow: inset 0 -2px 0 #1e40af; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
-
     .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
     .field { display: flex; flex-direction: column; gap: 4px; }
     .field.grow { flex: 1; min-width: 200px; }
@@ -59,60 +52,45 @@
     }
     input.coords-input { font-family: monospace; }
     input:focus, select:focus { border-color: #6366f1; }
-
     .addr-row { display: flex; gap: 8px; margin-bottom: 12px; }
     .addr-row input { flex: 1; }
     .addr-btn {
       padding: 9px 14px; border: none; border-radius: 7px;
       font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
-      background: #f3f4f6; color: #374151; transition: background 0.15s;
+      background: #f3f4f6; color: #374151;
     }
-    .addr-btn:hover { background: #e5e7eb; }
     .addr-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
     .geocode-result {
       font-size: 12px; margin-bottom: 10px; padding: 8px 10px;
       border-radius: 6px; display: none;
     }
     .geocode-result.success { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
     .geocode-result.error { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
-
     .resolved-coords {
       font-size: 12px; color: #6b7280; margin-bottom: 10px;
       padding: 6px 10px; background: #f9fafb; border-radius: 6px;
       border: 1px solid #e5e7eb; display: none; font-family: monospace;
     }
-
     button.search-btn {
       width: 100%; padding: 11px; border: none; border-radius: 8px;
       font-size: 14px; font-weight: 600; cursor: pointer;
-      background: linear-gradient(135deg, #166534, #1e40af);
-      color: white;
+      background: linear-gradient(135deg, #166534, #1e40af); color: white;
     }
     button.search-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 
-    /* Map */
-    #map {
-      width: 100%; height: 320px; border-radius: 10px;
-      border: 1px solid #e5e7eb; margin-bottom: 18px;
-      display: none;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
+    /* Map sits inside panel */
+    .map-section { display: none; margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 14px; }
+    .map-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    #map { width: 100%; height: 280px; border-radius: 8px; border: 1px solid #e5e7eb; }
+    .map-hint { font-size: 11px; color: #9ca3af; margin-top: 5px; text-align: center; }
 
-    .results-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 12px;
-    }
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .results-label { font-size: 13px; font-weight: 600; color: #374151; }
     .results-label code { font-family: monospace; color: #1e40af; }
     .count-badge { font-size: 12px; border-radius: 12px; padding: 2px 10px; font-weight: 600; border: 1px solid; }
     .count-badge.found { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
     .count-badge.clear { background: #f0fdf4; color: #166534; border-color: #86efac; }
-
-    .site-card {
-      border-radius: 8px; margin-bottom: 8px; overflow: hidden;
-      border: 1px solid; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    }
+    .site-card { border-radius: 8px; margin-bottom: 8px; overflow: hidden; border: 1px solid; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
     .site-card-header { padding: 8px 14px; display: flex; align-items: center; gap: 8px; }
     .badge {
       background: white; border-radius: 4px; padding: 1px 7px;
@@ -121,22 +99,16 @@
     }
     .card-title { font-weight: 600; font-size: 13px; }
     .count-pill { margin-left: auto; color: white; border-radius: 10px; padding: 1px 9px; font-size: 11px; font-weight: 700; }
-
     .site-card-body { background: white; }
     .site-row { padding: 10px 14px; border-top: 1px solid #f3f4f6; font-size: 13px; }
     .site-row:first-child { border-top: none; }
     .site-row-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .site-name { font-weight: 600; color: #111827; }
-    .site-distance {
-      font-size: 12px; font-weight: 600; white-space: nowrap;
-      background: #f3f4f6; color: #374151;
-      border-radius: 10px; padding: 2px 8px; flex-shrink: 0;
-    }
+    .site-distance { font-size: 12px; font-weight: 600; white-space: nowrap; background: #f3f4f6; color: #374151; border-radius: 10px; padding: 2px 8px; flex-shrink: 0; }
     .site-status { color: #6b7280; font-size: 12px; margin-top: 3px; }
     .site-desc { color: #4b5563; font-size: 12px; margin-top: 4px; line-height: 1.5; }
     .site-link { display: inline-block; margin-top: 5px; font-size: 12px; color: #1e40af; text-decoration: none; }
     .site-link:hover { text-decoration: underline; }
-
     .none-card {
       border: 1px solid #e5e7eb; border-left: 4px solid #d1d5db;
       border-radius: 8px; margin-bottom: 6px;
@@ -145,23 +117,11 @@
     }
     .none-label { font-size: 13px; color: #9ca3af; }
     .none-tag { margin-left: auto; font-size: 12px; color: #d1d5db; }
-
     .loading { display: flex; align-items: center; gap: 10px; color: #6b7280; font-size: 13px; padding: 12px 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner {
-      width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%;
-      border: 2px solid #d1d5db; border-top-color: #6366f1;
-      animation: spin 0.8s linear infinite;
-    }
-    .error-msg {
-      background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px;
-      padding: 12px 14px; font-size: 13px; color: #dc2626; margin-bottom: 10px;
-    }
-    .all-clear {
-      text-align: center; padding: 24px; background: #f0fdf4;
-      border: 1px solid #86efac; border-radius: 8px; font-size: 14px;
-      color: #166534; margin-bottom: 8px;
-    }
+    .spinner { width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%; border: 2px solid #d1d5db; border-top-color: #6366f1; animation: spin 0.8s linear infinite; }
+    .error-msg { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #dc2626; margin-bottom: 10px; }
+    .all-clear { text-align: center; padding: 24px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; font-size: 14px; color: #166534; margin-bottom: 8px; }
     .footer { margin-top: 10px; font-size: 11px; color: #9ca3af; text-align: center; }
     .hidden { display: none; }
   </style>
@@ -177,8 +137,8 @@
 
   <div class="panel">
     <div class="tabs">
-      <button class="tab active" id="tab-btn-coords" onclick="switchTab('coords', this)">📍 Coordinates</button>
-      <button class="tab" id="tab-btn-address" onclick="switchTab('address', this)">🔎 Address search</button>
+      <button class="tab active" onclick="switchTab('coords', this)">📍 Coordinates</button>
+      <button class="tab" onclick="switchTab('address', this)">🔎 Address search</button>
     </div>
 
     <!-- Coordinates tab -->
@@ -225,10 +185,14 @@
       </div>
       <button class="search-btn" id="searchBtnAddress" onclick="runSearchFromAddress()" disabled>🔍 Search</button>
     </div>
-  </div>
 
-  <!-- Map -->
-  <div id="map"></div>
+    <!-- Map inside panel — shows after coord/address entry -->
+    <div class="map-section" id="mapSection">
+      <div class="map-label">📍 Search location &amp; radius — pan and zoom to verify</div>
+      <div id="map"></div>
+      <p class="map-hint">The dashed circle shows your search radius. This is the area being queried — not the results.</p>
+    </div>
+  </div>
 
   <!-- Results -->
   <div id="results" class="hidden">
@@ -264,35 +228,30 @@
   let mapPin = null;
   let mapCircle = null;
 
-  // ── Map ──────────────────────────────────────────────────────────────────────
-  function initMap(lat, lng, radiusM) {
-    const mapEl = document.getElementById("map");
-    mapEl.style.display = "block";
+  function showMap(lat, lng, radiusM) {
+    const section = document.getElementById("mapSection");
+    section.style.display = "block";
 
     if (!leafletMap) {
-      leafletMap = L.map("map").setView([lat, lng], 13);
+      leafletMap = L.map("map", { zoomControl: true, dragging: true });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
       }).addTo(leafletMap);
     }
 
-    // Remove old pin and circle
-    if (mapPin) leafletMap.removeLayer(mapPin);
-    if (mapCircle) leafletMap.removeLayer(mapCircle);
+    // Remove old layers
+    if (mapPin) { leafletMap.removeLayer(mapPin); mapPin = null; }
+    if (mapCircle) { leafletMap.removeLayer(mapCircle); mapCircle = null; }
 
-    // Red pin marker
+    // Red pin
     const redIcon = L.divIcon({
-      html: `<div style="
-        width:24px;height:24px;
-        background:#dc2626;
-        border:3px solid white;
-        border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);
-        box-shadow:0 2px 6px rgba(0,0,0,0.35);
-      "></div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 24],
+      html: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36">
+        <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#dc2626"/>
+        <circle cx="12" cy="12" r="5" fill="white"/>
+      </svg>`,
+      iconSize: [24, 36],
+      iconAnchor: [12, 36],
       className: "",
     });
 
@@ -300,24 +259,21 @@
       .addTo(leafletMap)
       .bindPopup(`<b>Search point</b><br>${lat.toFixed(5)}, ${lng.toFixed(5)}`);
 
-    // Radius circle
+    // Dashed radius circle
     mapCircle = L.circle([lat, lng], {
       radius: radiusM,
       color: "#1e40af",
       fillColor: "#1e40af",
-      fillOpacity: 0.08,
+      fillOpacity: 0.07,
       weight: 2,
-      dashArray: "5, 5",
+      dashArray: "6, 5",
     }).addTo(leafletMap);
 
-    // Fit map to circle
+    // Fit bounds then force size recalculation (fixes drag bug)
     leafletMap.fitBounds(mapCircle.getBounds(), { padding: [20, 20] });
-
-    // Force Leaflet to recalculate size in case it was hidden
-    setTimeout(() => leafletMap.invalidateSize(), 50);
+    setTimeout(() => leafletMap.invalidateSize(), 100);
   }
 
-  // ── Tabs ─────────────────────────────────────────────────────────────────────
   function switchTab(tab, el) {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -325,7 +281,6 @@
     el.classList.add("active");
   }
 
-  // ── Geocoding ────────────────────────────────────────────────────────────────
   async function geocodeAddress() {
     const query = document.getElementById("addressInput").value.trim();
     if (!query) return;
@@ -366,9 +321,8 @@
 
       document.getElementById("searchBtnAddress").disabled = false;
 
-      // Show pin on map immediately after address is found
       const radius = parseInt(document.getElementById("radius-address").value);
-      initMap(geocodedLat, geocodedLng, radius);
+      showMap(geocodedLat, geocodedLng, radius);
 
     } catch (e) {
       resultEl.className = "geocode-result error";
@@ -380,7 +334,6 @@
     }
   }
 
-  // ── Search ───────────────────────────────────────────────────────────────────
   function parseCoords(val) {
     const parts = val.trim().split(",").map(s => parseFloat(s.trim()));
     if (parts.length !== 2 || parts.some(isNaN)) return null;
@@ -394,14 +347,14 @@
     const coords = parseCoords(document.getElementById("coords").value);
     if (!coords) { alert("Invalid coordinates — use: lat, lng e.g. 52.23102, -1.71353"); return; }
     const radius = parseInt(document.getElementById("radius-coords").value);
-    initMap(coords.lat, coords.lng, radius);
+    showMap(coords.lat, coords.lng, radius);
     runSearch(coords.lat, coords.lng, radius, "searchBtnCoords");
   }
 
   function runSearchFromAddress() {
     if (geocodedLat == null) { alert("Please find an address first."); return; }
     const radius = parseInt(document.getElementById("radius-address").value);
-    initMap(geocodedLat, geocodedLng, radius);
+    showMap(geocodedLat, geocodedLng, radius);
     runSearch(geocodedLat, geocodedLng, radius, "searchBtnAddress");
   }
 
