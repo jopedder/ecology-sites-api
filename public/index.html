@@ -469,10 +469,23 @@ show("downloadBtn");
     if (e.key === "Enter") runSearchFromCoords();
   });
   function downloadCSV() {
+  if (!window.lastSearchData) return;
   const rows = [["Designation", "Site Name", "Status", "Distance"]];
   DESIGNATIONS.forEach(des => {
-    const features = document.querySelectorAll(`#siteCards .site-row`);
+    (window.lastSearchData[des.id] || []).forEach(f => {
+      const dist = f.distanceM != null
+        ? (f.distanceM < 1000 ? `${f.distanceM}m` : `${(f.distanceM/1000).toFixed(1)}km`)
+        : "";
+      rows.push([des.fullName, f.name, f.status || "", dist]);
+    });
   });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `protected-sites-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
 
   // Rebuild from last search data
   if (!window.lastSearchData) return;
