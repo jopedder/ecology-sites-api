@@ -255,9 +255,29 @@
       className: "",
     });
 
-    mapPin = L.marker([lat, lng], { icon: redIcon })
+    mapPin = L.marker([lat, lng], { icon: redIcon, draggable: true })
       .addTo(leafletMap)
       .bindPopup(`<b>Search point</b><br>${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    mapPin.on("dragend", function(e) {
+  const pos = e.target.getLatLng();
+  if (mapCircle) {
+    leafletMap.removeLayer(mapCircle);
+    const radius = parseInt(
+      document.getElementById("radius-coords").value ||
+      document.getElementById("radius-address").value
+    );
+    mapCircle = L.circle([pos.lat, pos.lng], {
+      radius: radius,
+      color: "#1e40af", fillColor: "#1e40af",
+      fillOpacity: 0.07, weight: 2, dashArray: "6, 5",
+    }).addTo(leafletMap);
+  }
+  geocodedLat = pos.lat;
+  geocodedLng = pos.lng;
+  document.getElementById("resolvedCoords").textContent =
+    `Coordinates: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
+  mapPin.setPopupContent(`<b>Search point</b><br>${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
+});
 
     // Dashed radius circle
     mapCircle = L.circle([lat, lng], {
