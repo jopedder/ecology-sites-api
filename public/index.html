@@ -75,7 +75,6 @@
     }
     button.search-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 
-    /* Map — sits outside the panel so it prints */
     .map-section {
       display: none; background: white; border: 1px solid #e5e7eb;
       border-radius: 12px; padding: 14px; margin-bottom: 18px;
@@ -88,7 +87,6 @@
     .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #374151; }
     .legend-swatch { width: 14px; height: 10px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.2); flex-shrink: 0; }
 
-    /* Results */
     .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .results-label { font-size: 13px; font-weight: 600; color: #374151; }
     .results-label code { font-family: monospace; color: #1e40af; }
@@ -133,10 +131,10 @@
     .footer a { color: #1e40af; }
     .hidden { display: none; }
 
-    /* Print */
     @media print {
       body { background: white; padding: 0; }
       .panel, .action-row, .footer, .print-hide { display: none !important; }
+      .leaflet-control-zoom { display: none !important; }
       .map-section { display: block !important; border: none; box-shadow: none; padding: 0; margin-bottom: 16px; border-radius: 0; }
       #map { height: 380px !important; border-radius: 0 !important; }
       .map-legend { display: flex !important; }
@@ -154,7 +152,6 @@
   </div>
   <p class="subtitle">Queries Natural England for SSSI, SAC, SPA, Ramsar, NNR, National Parks and LNR within your chosen radius. <strong>England only.</strong></p>
 
-  <!-- Input panel -->
   <div class="panel print-hide">
     <div class="tabs">
       <button class="tab active" onclick="switchTab('coords', this)">📍 Coordinates</button>
@@ -205,15 +202,14 @@
     </div>
   </div>
 
-  <!-- Map — outside panel so it prints -->
+  <!-- Map outside panel for print -->
   <div class="map-section" id="mapSection">
     <div class="map-label">📍 Search location &amp; radius</div>
     <div id="map"></div>
     <div class="map-legend" id="mapLegend"></div>
-    <p class="map-hint print-hide">Drag the pin to adjust the search location. Hover over shaded areas to see site names.</p>
+    <p class="map-hint print-hide">Drag the pin to adjust location. Shaded areas show all designated sites in the current map view. Hover to see site names.</p>
   </div>
 
-  <!-- Results -->
   <div id="results" class="hidden">
     <div class="results-header">
       <span class="results-label" id="resultsLabel"></span>
@@ -256,9 +252,12 @@
   let leafletMap = null;
   let mapPin = null;
   let mapCircle = null;
-  let sitePolygons = [];
+  let radiusPolygons = [];   // solid — within search radius
+  let viewportPolygons = []; // lighter — whole map view
+  let bboxDebounce = null;
+  let allMapFeatures = [];   // for hover across both layers
 
-  // ── Map ──────────────────────────────────────────────────────────────────────
+  // ── Map setup ────────────────────────────────────────────────────────────────
   function showMap(lat, lng, radiusM) {
     const section = document.getElementById("mapSection");
     section.style.display = "block";
@@ -269,6 +268,12 @@
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
       }).addTo(leafletMap);
+
+      // Refresh viewport polygons on pan/zoom (debounced)
+      leafletMap.on("moveend zoomend", () => {
+        clearTimeout(bboxDebounce);
+        bboxDebounce = setTimeout(fetchViewportSites, 600);
+      });
     }
 
     if (mapPin) { leafletMap.removeLayer(mapPin); mapPin = null; }
@@ -294,7 +299,7 @@
       );
       if (mapCircle) { leafletMap.removeLayer(mapCircle); }
       mapCircle = L.circle([pos.lat, pos.lng], {
-        radius: radius, color: "#1e40af", fillColor: "#1e40af",
+        radius, color: "#1e40af", fillColor: "#1e40af",
         fillOpacity: 0.07, weight: 2, dashArray: "6, 5",
       }).addTo(leafletMap);
       geocodedLat = pos.lat;
@@ -313,54 +318,90 @@
     setTimeout(() => leafletMap.invalidateSize(), 100);
   }
 
-  function clearSitePolygons() {
-    sitePolygons.forEach(p => leafletMap.removeLayer(p));
-    sitePolygons = [];
-    if (leafletMap && leafletMap._hoverHandler) {
-      leafletMap.off("mousemove", leafletMap._hoverHandler);
-      leafletMap._hoverHandler = null;
-    }
+  // ── Radius polygons (solid, from search results) ──────────────────────────
+  function clearRadiusPolygons() {
+    radiusPolygons.forEach(p => leafletMap.removeLayer(p));
+    radiusPolygons = [];
   }
 
-  function drawSitePolygons(data) {
-    if (!leafletMap) return;
-    clearSitePolygons();
+  function drawRadiusPolygons(data) {
+    clearRadiusPolygons();
     const legendItems = new Set();
-    const allFeatures = [];
+    // Remove radius features from allMapFeatures then re-add
+    allMapFeatures = allMapFeatures.filter(f => f.source !== "radius");
 
     DESIGNATIONS.forEach(des => {
-      const features = data[des.id] || [];
-      features.forEach(f => {
+      (data[des.id] || []).forEach(f => {
         if (!f.rings || f.rings.length === 0) return;
         const polygon = L.polygon(f.rings, {
-          color: des.color,
-          fillColor: des.fill,
-          fillOpacity: 0.35,
-          weight: 2,
-          interactive: false,
+          color: des.color, fillColor: des.fill,
+          fillOpacity: 0.45, weight: 2, interactive: false,
         }).addTo(leafletMap);
-        sitePolygons.push(polygon);
+        radiusPolygons.push(polygon);
         legendItems.add(des.id);
-        allFeatures.push({ polygon, name: f.name, label: des.label });
+        allMapFeatures.push({ polygon, name: f.name, label: des.label, source: "radius" });
       });
     });
 
-    // Map-level hover — show all sites under cursor
-    const tooltip = L.tooltip({ sticky: true, opacity: 0.95 });
-    leafletMap._hoverHandler = function(e) {
-      const pt = e.latlng;
-      const hits = allFeatures.filter(f => f.polygon.getBounds().contains(pt));
-      if (hits.length > 0) {
-        tooltip.setContent(hits.map(h => `<b>${h.label}:</b> ${h.name}`).join("<br>"))
-          .setLatLng(pt).addTo(leafletMap);
-      } else {
-        tooltip.remove();
-      }
-    };
-    leafletMap.on("mousemove", leafletMap._hoverHandler);
-    leafletMap.on("mouseout", () => tooltip.remove());
+    updateLegend(legendItems);
+    refreshHoverHandler();
+    if (mapCircle) mapCircle.bringToFront();
+  }
 
-    // Legend
+  // ── Viewport polygons (lighter, whole map view) ───────────────────────────
+  function clearViewportPolygons() {
+    viewportPolygons.forEach(p => leafletMap.removeLayer(p));
+    viewportPolygons = [];
+    allMapFeatures = allMapFeatures.filter(f => f.source !== "viewport");
+  }
+
+  async function fetchViewportSites() {
+    if (!leafletMap) return;
+    const b = leafletMap.getBounds();
+    const bbox = `${b.getWest()},${b.getSouth()},${b.getEast()},${b.getNorth()}`;
+    try {
+      const res = await fetch(`/api/bbox?bbox=${bbox}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      clearViewportPolygons();
+      const legendItems = new Set(
+        radiusPolygons.length > 0
+          ? DESIGNATIONS.filter(d => (window.lastSearchData?.[d.id]?.length ?? 0) > 0).map(d => d.id)
+          : []
+      );
+
+      DESIGNATIONS.forEach(des => {
+        (data[des.id] || []).forEach(f => {
+          if (!f.rings || f.rings.length === 0) return;
+          // Skip if already drawn as a radius polygon (same name)
+          const alreadyDrawn = allMapFeatures.some(
+            m => m.source === "radius" && m.name.toLowerCase() === f.name.toLowerCase() && m.label === des.label
+          );
+          if (alreadyDrawn) return;
+
+          const polygon = L.polygon(f.rings, {
+            color: des.color, fillColor: des.fill,
+            fillOpacity: 0.18, weight: 1.5,
+            dashArray: "3, 4", interactive: false,
+          }).addTo(leafletMap);
+          viewportPolygons.push(polygon);
+          legendItems.add(des.id);
+          allMapFeatures.push({ polygon, name: f.name, label: des.label, source: "viewport" });
+        });
+      });
+
+      updateLegend(legendItems);
+      refreshHoverHandler();
+      if (mapCircle) mapCircle.bringToFront();
+      if (mapPin) mapPin.bringToFront && mapPin.bringToFront();
+
+    } catch (e) {
+      // silently fail — viewport layer is supplementary
+    }
+  }
+
+  // ── Legend ────────────────────────────────────────────────────────────────
+  function updateLegend(legendItems) {
     const legendEl = document.getElementById("mapLegend");
     if (legendItems.size > 0) {
       legendEl.style.display = "flex";
@@ -374,11 +415,31 @@
     } else {
       legendEl.style.display = "none";
     }
-
-    if (mapCircle) mapCircle.bringToFront();
   }
 
-  // ── Tabs ─────────────────────────────────────────────────────────────────────
+  // ── Hover ─────────────────────────────────────────────────────────────────
+  function refreshHoverHandler() {
+    if (!leafletMap) return;
+    if (leafletMap._hoverTooltip) leafletMap._hoverTooltip.remove();
+    if (leafletMap._hoverHandler) leafletMap.off("mousemove", leafletMap._hoverHandler);
+
+    const tooltip = L.tooltip({ sticky: true, opacity: 0.95 });
+    leafletMap._hoverTooltip = tooltip;
+    leafletMap._hoverHandler = function(e) {
+      const pt = e.latlng;
+      const hits = allMapFeatures.filter(f => f.polygon.getBounds().contains(pt));
+      if (hits.length > 0) {
+        tooltip.setContent(hits.map(h => `<b>${h.label}:</b> ${h.name}`).join("<br>"))
+          .setLatLng(pt).addTo(leafletMap);
+      } else {
+        tooltip.remove();
+      }
+    };
+    leafletMap.on("mousemove", leafletMap._hoverHandler);
+    leafletMap.on("mouseout", () => tooltip.remove());
+  }
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
   function switchTab(tab, el) {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -386,7 +447,7 @@
     el.classList.add("active");
   }
 
-  // ── Geocoding ────────────────────────────────────────────────────────────────
+  // ── Geocoding ─────────────────────────────────────────────────────────────
   async function geocodeAddress() {
     const query = document.getElementById("addressInput").value.trim();
     if (!query) return;
@@ -425,7 +486,7 @@
     }
   }
 
-  // ── Coord parsing ─────────────────────────────────────────────────────────────
+  // ── Coord parsing ─────────────────────────────────────────────────────────
   function parseCoords(val) {
     const parts = val.trim().split(",").map(s => parseFloat(s.trim()));
     if (parts.length !== 2 || parts.some(isNaN)) return null;
@@ -435,7 +496,6 @@
     return null;
   }
 
-  // ── Search triggers ───────────────────────────────────────────────────────────
   function runSearchFromCoords() {
     const coords = parseCoords(document.getElementById("coords").value);
     if (!coords) { alert("Invalid coordinates — use: lat, lng e.g. 53.31858, -1.61388"); return; }
@@ -451,7 +511,7 @@
     runSearch(geocodedLat, geocodedLng, radius, "searchBtnAddress");
   }
 
-  // ── Core search ───────────────────────────────────────────────────────────────
+  // ── Core search ───────────────────────────────────────────────────────────
   async function runSearch(lat, lng, radius, btnId) {
     const btn = document.getElementById(btnId);
     btn.disabled = true; btn.textContent = "⏳ Searching…";
@@ -473,7 +533,10 @@
       window.lastSearchRadius = radius;
 
       hide("loading");
-      drawSitePolygons(data);
+
+      // Draw radius results (solid) then viewport sites (lighter)
+      drawRadiusPolygons(data);
+      fetchViewportSites();
 
       let totalFound = 0;
       const cardsHtml = DESIGNATIONS.map(des => {
@@ -527,7 +590,7 @@
     }
   }
 
-  // ── CSV ───────────────────────────────────────────────────────────────────────
+  // ── CSV ───────────────────────────────────────────────────────────────────
   function downloadCSV() {
     if (!window.lastSearchData) return;
     const lat = window.lastSearchLat;
@@ -555,7 +618,6 @@
     a.click();
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
   function show(id) { document.getElementById(id).classList.remove("hidden"); }
   function hide(id) { document.getElementById(id).classList.add("hidden"); }
 
