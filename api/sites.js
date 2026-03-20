@@ -1,7 +1,5 @@
-// Convert degrees to radians
 const toRad = d => (d * Math.PI) / 180;
 
-// Haversine distance between two WGS84 points in metres
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const dLat = toRad(lat2 - lat1);
@@ -12,8 +10,6 @@ function haversine(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Point-in-polygon ray casting test
-// ring is array of [x, y] (lng, lat) pairs
 function pointInRing(px, py, ring) {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -26,65 +22,32 @@ function pointInRing(px, py, ring) {
   return inside;
 }
 
-// Minimum distance in metres from point (pLat, pLng) to a line segment (a->b)
-// a and b are [lng, lat]
 function distToSegmentM(pLat, pLng, a, b) {
   const aLat = a[1], aLng = a[0];
   const bLat = b[1], bLng = b[0];
-
   const dx = bLng - aLng;
   const dy = bLat - aLat;
   const lenSq = dx * dx + dy * dy;
-
   let t = 0;
   if (lenSq > 0) {
     t = ((pLng - aLng) * dx + (pLat - aLat) * dy) / lenSq;
     t = Math.max(0, Math.min(1, t));
   }
-
   const closestLng = aLng + t * dx;
   const closestLat = aLat + t * dy;
   return haversine(pLat, pLng, closestLat, closestLng);
 }
 
-// Calculate true distance from point to a polygon geometry
-// Returns 0 if inside, edge distance in metres if outside
 function distToGeometry(searchLat, searchLng, geometry) {
   if (!geometry) return null;
-
-  const type = geometry.type;
-  let rings = [];
-
-  if (type === "Polygon") {
-    rings = geometry.rings || geometry.coordinates || [];
-  } else if (type === "MultiPolygon") {
-    const parts = geometry.rings || geometry.coordinates || [];
-    // Flatten to individual rings
-    parts.forEach(part => {
-      if (Array.isArray(part[0][0])) {
-        part.forEach(r => rings.push(r));
-      } else {
-        rings.push(part);
-      }
-    });
-  } else {
-    // esriGeometryPolygon from ArcGIS JSON (rings array)
-    rings = geometry.rings || [];
-  }
-
+  const rings = geometry.rings || [];
   if (rings.length === 0) return null;
 
-  // Test if point is inside any outer ring
-  // In ArcGIS, outer rings are clockwise, holes are counter-clockwise
-  // For simplicity, test against all rings — if inside any, return 0
   for (const ring of rings) {
     if (ring.length < 3) continue;
-    if (pointInRing(searchLng, searchLat, ring)) {
-      return 0;
-    }
+    if (pointInRing(searchLng, searchLat, ring)) return 0;
   }
 
-  // Point is outside — find minimum distance to any edge of any ring
   let minDist = Infinity;
   for (const ring of rings) {
     for (let i = 0; i < ring.length - 1; i++) {
@@ -92,8 +55,28 @@ function distToGeometry(searchLat, searchLng, geometry) {
       if (d < minDist) minDist = d;
     }
   }
-
   return minDist === Infinity ? null : minDist;
+}
+
+// Convert ArcGIS rings ([lng,lat] pairs) to Leaflet-ready format ([[lat,lng] pairs])
+// Simplify dense polygons to keep response size reasonable
+function ringsToLeaflet(rings, maxPoints = 500) {
+  if (!rings || rings.length === 0) return null;
+  const converted = rings.map(ring => {
+    // Simplify by skipping vertices if ring is very dense
+    const step = Math.max(1, Math.floor(ring.length / maxPoints));
+    const simplified = [];
+    for (let i = 0; i < ring.length; i += step) {
+      simplified.push([ring[i][1], ring[i][0]]); // flip to [lat, lng] for Leaflet
+    }
+    // Always include last point to close ring
+    const last = ring[ring.length - 1];
+    if (simplified[simplified.length - 1][0] !== last[1]) {
+      simplified.push([last[1], last[0]]);
+    }
+    return simplified;
+  });
+  return converted;
 }
 
 const LAYERS = [
@@ -181,7 +164,6 @@ export default async function handler(req, res) {
   const searchLat = parseFloat(lat);
   const searchLng = parseFloat(lng);
 
-  // Request full geometry so we can calculate true edge distance
   const params = new URLSearchParams({
     geometry: JSON.stringify({ x: searchLng, y: searchLat }),
     geometryType: "esriGeometryPoint",
@@ -190,8 +172,8 @@ export default async function handler(req, res) {
     distance: String(radius),
     units: "esriSRUnit_Meter",
     outFields: "*",
-    returnGeometry: "true",   // full polygon geometry
-    outSR: "4326",            // WGS84 so coordinates are in lat/lng
+    returnGeometry: "true",
+    outSR: "4326",
     f: "json",
   });
 
@@ -208,15 +190,15 @@ export default async function handler(req, res) {
           const name = a[layer.nameField] || a.NAME || a.SITE_NAME || "Unnamed site";
           const status = a.STATUS || a.CATEGORY || "";
           const description = extractDesc(a, layer.descFields);
-
-          // Calculate true edge distance (0 if inside)
           const rawDist = distToGeometry(searchLat, searchLng, f.geometry);
           const distanceM = rawDist !== null ? Math.round(rawDist) : null;
 
-          return { name, status, description, distanceM };
+          // Pass simplified polygon rings to frontend for drawing
+          const rings = f.geometry ? ringsToLeaflet(f.geometry.rings) : null;
+
+          return { name, status, description, distanceM, rings };
         });
 
-        // Sort by distance (inside = 0 sorts first)
         features.sort((a, b) => {
           if (a.distanceM == null) return 1;
           if (b.distanceM == null) return -1;
