@@ -1,12 +1,99 @@
+// Convert degrees to radians
+const toRad = d => (d * Math.PI) / 180;
+
+// Haversine distance between two WGS84 points in metres
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
-  const toRad = d => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Point-in-polygon ray casting test
+// ring is array of [x, y] (lng, lat) pairs
+function pointInRing(px, py, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+    const intersect = ((yi > py) !== (yj > py)) &&
+      (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+// Minimum distance in metres from point (pLat, pLng) to a line segment (a->b)
+// a and b are [lng, lat]
+function distToSegmentM(pLat, pLng, a, b) {
+  const aLat = a[1], aLng = a[0];
+  const bLat = b[1], bLng = b[0];
+
+  const dx = bLng - aLng;
+  const dy = bLat - aLat;
+  const lenSq = dx * dx + dy * dy;
+
+  let t = 0;
+  if (lenSq > 0) {
+    t = ((pLng - aLng) * dx + (pLat - aLat) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+  }
+
+  const closestLng = aLng + t * dx;
+  const closestLat = aLat + t * dy;
+  return haversine(pLat, pLng, closestLat, closestLng);
+}
+
+// Calculate true distance from point to a polygon geometry
+// Returns 0 if inside, edge distance in metres if outside
+function distToGeometry(searchLat, searchLng, geometry) {
+  if (!geometry) return null;
+
+  const type = geometry.type;
+  let rings = [];
+
+  if (type === "Polygon") {
+    rings = geometry.rings || geometry.coordinates || [];
+  } else if (type === "MultiPolygon") {
+    const parts = geometry.rings || geometry.coordinates || [];
+    // Flatten to individual rings
+    parts.forEach(part => {
+      if (Array.isArray(part[0][0])) {
+        part.forEach(r => rings.push(r));
+      } else {
+        rings.push(part);
+      }
+    });
+  } else {
+    // esriGeometryPolygon from ArcGIS JSON (rings array)
+    rings = geometry.rings || [];
+  }
+
+  if (rings.length === 0) return null;
+
+  // Test if point is inside any outer ring
+  // In ArcGIS, outer rings are clockwise, holes are counter-clockwise
+  // For simplicity, test against all rings — if inside any, return 0
+  for (const ring of rings) {
+    if (ring.length < 3) continue;
+    if (pointInRing(searchLng, searchLat, ring)) {
+      return 0;
+    }
+  }
+
+  // Point is outside — find minimum distance to any edge of any ring
+  let minDist = Infinity;
+  for (const ring of rings) {
+    for (let i = 0; i < ring.length - 1; i++) {
+      const d = distToSegmentM(searchLat, searchLng, ring[i], ring[i + 1]);
+      if (d < minDist) minDist = d;
+    }
+  }
+
+  return minDist === Infinity ? null : minDist;
 }
 
 const LAYERS = [
@@ -94,6 +181,7 @@ export default async function handler(req, res) {
   const searchLat = parseFloat(lat);
   const searchLng = parseFloat(lng);
 
+  // Request full geometry so we can calculate true edge distance
   const params = new URLSearchParams({
     geometry: JSON.stringify({ x: searchLng, y: searchLat }),
     geometryType: "esriGeometryPoint",
@@ -102,9 +190,8 @@ export default async function handler(req, res) {
     distance: String(radius),
     units: "esriSRUnit_Meter",
     outFields: "*",
-    returnGeometry: "false",
-    returnCentroid: "true",
-    outSR: "4326",
+    returnGeometry: "true",   // full polygon geometry
+    outSR: "4326",            // WGS84 so coordinates are in lat/lng
     f: "json",
   });
 
@@ -121,13 +208,15 @@ export default async function handler(req, res) {
           const name = a[layer.nameField] || a.NAME || a.SITE_NAME || "Unnamed site";
           const status = a.STATUS || a.CATEGORY || "";
           const description = extractDesc(a, layer.descFields);
-          let distanceM = null;
-          if (f.centroid && f.centroid.x != null && f.centroid.y != null) {
-            distanceM = haversine(searchLat, searchLng, f.centroid.y, f.centroid.x);
-          }
+
+          // Calculate true edge distance (0 if inside)
+          const rawDist = distToGeometry(searchLat, searchLng, f.geometry);
+          const distanceM = rawDist !== null ? Math.round(rawDist) : null;
+
           return { name, status, description, distanceM };
         });
 
+        // Sort by distance (inside = 0 sorts first)
         features.sort((a, b) => {
           if (a.distanceM == null) return 1;
           if (b.distanceM == null) return -1;
