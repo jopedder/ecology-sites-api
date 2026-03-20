@@ -119,7 +119,8 @@
       margin-bottom: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
       background: #f0fdf4; color: #166534;
     }
-    .footer { margin-top: 10px; font-size: 11px; color: #9ca3af; text-align: center; }
+    .footer { margin-top: 10px; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.8; }
+    .footer a { color: #1e40af; }
     .hidden { display: none; }
   </style>
 </head>
@@ -206,7 +207,11 @@
     <div id="allClear" class="all-clear hidden">✅ No designated sites found within this radius.</div>
     <button id="downloadBtn" class="csv-btn hidden" onclick="downloadCSV()">⬇ Download results as CSV</button>
     <div class="footer hidden" id="footer">
-      Data: Natural England ArcGIS FeatureServer · Distances to site centroid · Always verify against MAGIC for definitive boundaries
+      Data: Natural England ArcGIS FeatureServer · Distances to site centroid<br>
+      <a href="https://magic.defra.gov.uk/MagicMap.html?chosenLayers=ramPIndex,ramIndex,proposedRamsarP,proposedRamsar,ramscoPIndex,ramscoIndex,ramwalPIndex,ramwalIndex,sacPossibleP,sacPossible,sacscoPIndex,sacscoIndex,sacwalPIndex,sacwalIndex,spaPIndex,spaIndex,spaPotentialP,spaPotential,spascoPIndex,spascoIndex,spawalPIndex,spawalIndex&box=-844008:-48042:1324356:1062625"
+         target="_blank" rel="noopener">
+        Verify on MAGIC (inc. proposed &amp; possible sites) ↗
+      </a>
     </div>
   </div>
 
@@ -218,7 +223,6 @@
     { id: "spa",    label: "SPA",    fullName: "Special Protection Area",              color: "#6b21a8", bg: "#f3e8ff" },
     { id: "ramsar", label: "Ramsar", fullName: "Ramsar Wetland",                       color: "#0f766e", bg: "#ccfbf1" },
     { id: "lnr",    label: "LNR",    fullName: "Local Nature Reserve",                color: "#b45309", bg: "#fffbeb" },
-    { id: "pspa", label: "pSPA", fullName: "Potential Special Protection Area", color: "#7e22ce", bg: "#faf5ff" },
   ];
 
   let geocodedLat = null;
@@ -248,9 +252,7 @@
         <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#dc2626"/>
         <circle cx="12" cy="12" r="5" fill="white"/>
       </svg>`,
-      iconSize: [24, 36],
-      iconAnchor: [12, 36],
-      className: "",
+      iconSize: [24, 36], iconAnchor: [12, 36], className: "",
     });
 
     mapPin = L.marker([lat, lng], { icon: redIcon, draggable: true })
@@ -265,8 +267,7 @@
       );
       if (mapCircle) { leafletMap.removeLayer(mapCircle); }
       mapCircle = L.circle([pos.lat, pos.lng], {
-        radius: radius,
-        color: "#1e40af", fillColor: "#1e40af",
+        radius: radius, color: "#1e40af", fillColor: "#1e40af",
         fillOpacity: 0.07, weight: 2, dashArray: "6, 5",
       }).addTo(leafletMap);
       geocodedLat = pos.lat;
@@ -277,8 +278,7 @@
     });
 
     mapCircle = L.circle([lat, lng], {
-      radius: radiusM,
-      color: "#1e40af", fillColor: "#1e40af",
+      radius: radiusM, color: "#1e40af", fillColor: "#1e40af",
       fillOpacity: 0.07, weight: 2, dashArray: "6, 5",
     }).addTo(leafletMap);
 
@@ -298,53 +298,38 @@
   async function geocodeAddress() {
     const query = document.getElementById("addressInput").value.trim();
     if (!query) return;
-
     const btn = document.getElementById("geocodeBtn");
     const resultEl = document.getElementById("geocodeResult");
     const coordsEl = document.getElementById("resolvedCoords");
-
-    btn.disabled = true;
-    btn.textContent = "…";
-    resultEl.style.display = "none";
-    coordsEl.style.display = "none";
-    geocodedLat = null;
-    geocodedLng = null;
+    btn.disabled = true; btn.textContent = "…";
+    resultEl.style.display = "none"; coordsEl.style.display = "none";
+    geocodedLat = null; geocodedLng = null;
     document.getElementById("searchBtnAddress").disabled = true;
-
     try {
       const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-
       if (!data || data.length === 0) {
         resultEl.className = "geocode-result error";
         resultEl.textContent = "Address not found — try a more specific search, e.g. add town or county.";
-        resultEl.style.display = "block";
-        return;
+        resultEl.style.display = "block"; return;
       }
-
       const place = data[0];
       geocodedLat = parseFloat(place.lat);
       geocodedLng = parseFloat(place.lon);
-
       resultEl.className = "geocode-result success";
       resultEl.textContent = `✓ Found: ${place.display_name}`;
       resultEl.style.display = "block";
-
       coordsEl.textContent = `Coordinates: ${geocodedLat.toFixed(5)}, ${geocodedLng.toFixed(5)}`;
       coordsEl.style.display = "block";
-
       document.getElementById("searchBtnAddress").disabled = false;
-
       const radius = parseInt(document.getElementById("radius-address").value);
       showMap(geocodedLat, geocodedLng, radius);
-
     } catch (e) {
       resultEl.className = "geocode-result error";
       resultEl.textContent = "Geocoding failed — check your connection and try again.";
       resultEl.style.display = "block";
     } finally {
-      btn.disabled = false;
-      btn.textContent = "Find";
+      btn.disabled = false; btn.textContent = "Find";
     }
   }
 
@@ -377,21 +362,13 @@
   // ── Core search ───────────────────────────────────────────────────────────────
   async function runSearch(lat, lng, radius, btnId) {
     const btn = document.getElementById(btnId);
-    btn.disabled = true;
-    btn.textContent = "⏳ Searching…";
-
-    show("results");
-    show("loading");
-    hide("errorMsg");
-    hide("allClear");
-    hide("countBadge");
-    hide("downloadBtn");
-    hide("footer");
+    btn.disabled = true; btn.textContent = "⏳ Searching…";
+    show("results"); show("loading");
+    hide("errorMsg"); hide("allClear"); hide("countBadge"); hide("downloadBtn"); hide("footer");
     document.getElementById("siteCards").innerHTML = "";
     document.getElementById("resultsLabel").innerHTML =
       `Results within ${(radius/1000).toFixed(1)} km of <code>${lat.toFixed(5)}, ${lng.toFixed(5)}</code>`;
 
-    // Scroll to results on mobile
     document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
 
     try {
@@ -400,13 +377,16 @@
       const data = await res.json();
 
       window.lastSearchData = data;
+      window.lastSearchLat = lat;
+      window.lastSearchLng = lng;
+      window.lastSearchRadius = radius;
+
       hide("loading");
 
       let totalFound = 0;
       const cardsHtml = DESIGNATIONS.map(des => {
         const features = data[des.id] || [];
         totalFound += features.length;
-
         if (features.length === 0) {
           return `<div class="none-card" style="border-left-color:${des.color}">
             <span class="badge" style="color:${des.color};border-color:${des.color}40">${des.label}</span>
@@ -414,7 +394,6 @@
             <span class="none-tag">None within radius</span>
           </div>`;
         }
-
         const rows = features.map(f => {
           const dist = f.distanceM != null
             ? (f.distanceM < 1000 ? `${f.distanceM} m` : `${(f.distanceM/1000).toFixed(1)} km`)
@@ -428,7 +407,6 @@
             ${f.description ? `<div class="site-desc">${f.description}</div>` : ""}
           </div>`;
         }).join("");
-
         return `<div class="site-card" style="border-color:${des.color}30;border-left:4px solid ${des.color}">
           <div class="site-card-header" style="background:${des.bg}">
             <span class="badge" style="color:${des.color};border-color:${des.color}40">${des.label}</span>
@@ -440,7 +418,6 @@
       }).join("");
 
       document.getElementById("siteCards").innerHTML = cardsHtml;
-
       const badge = document.getElementById("countBadge");
       badge.textContent = `${totalFound} site${totalFound !== 1 ? "s" : ""} found`;
       badge.className = `count-badge ${totalFound > 0 ? "found" : "clear"}`;
@@ -454,15 +431,24 @@
       document.getElementById("errorMsg").textContent = `⚠ ${e.message}`;
       show("errorMsg");
     } finally {
-      btn.disabled = false;
-      btn.textContent = "🔍 Search";
+      btn.disabled = false; btn.textContent = "🔍 Search";
     }
   }
 
   // ── CSV download ──────────────────────────────────────────────────────────────
   function downloadCSV() {
     if (!window.lastSearchData) return;
-    const rows = [["Designation", "Site Name", "Status", "Distance"]];
+    const lat = window.lastSearchLat;
+    const lng = window.lastSearchLng;
+    const radius = window.lastSearchRadius;
+
+    const rows = [
+      ["Search coordinates", `${lat.toFixed(5)}, ${lng.toFixed(5)}`],
+      ["Search radius (m)", radius],
+      [],
+      ["Designation", "Site Name", "Status", "Distance from search point"],
+    ];
+
     DESIGNATIONS.forEach(des => {
       (window.lastSearchData[des.id] || []).forEach(f => {
         const dist = f.distanceM != null
@@ -471,11 +457,12 @@
         rows.push([des.fullName, f.name, f.status || "", dist]);
       });
     });
+
     const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `protected-sites-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `protected-sites-${lat.toFixed(5)},${lng.toFixed(5)}-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
   }
 
