@@ -224,7 +224,7 @@
     <div id="allClear" class="all-clear hidden">✅ No designated sites found within this radius.</div>
     <div class="action-row hidden print-hide" id="actionRow">
       <button class="action-btn csv-btn" onclick="downloadCSV()">⬇ Download CSV</button>
-      <button class="action-btn print-btn" onclick="window.print()">🖨 Print</button>
+      <button class="action-btn print-btn" onclick="printWithTitle()">🖨 Print</button>
     </div>
     <div class="footer hidden" id="footer">
       Data: Natural England ArcGIS FeatureServer · Distances to site boundary<br>
@@ -551,7 +551,7 @@
         }
         const rows = features.map(f => {
           const dist = f.distanceM != null
-            ? (f.distanceM === 0 ? `0.0 km (within site)` : f.distanceM < 1000 ? `${f.distanceM} m` : `${(f.distanceM/1000).toFixed(1)} km`)
+            ? (f.distanceM === 0 ? `0.00 km (within site)` : `${(f.distanceM/1000).toFixed(2)} km`)
             : null;
           return `<div class="site-row">
             <div class="site-row-top">
@@ -605,7 +605,7 @@
     DESIGNATIONS.forEach(des => {
       (window.lastSearchData[des.id] || []).forEach(f => {
         const dist = f.distanceM != null
-          ? (f.distanceM === 0 ? `0.0 km (within site)` : f.distanceM < 1000 ? `${f.distanceM}m` : `${(f.distanceM/1000).toFixed(1)}km`)
+          ? (f.distanceM === 0 ? `0.00 km (within site)` : `${(f.distanceM/1000).toFixed(2)} km`)
           : "";
         rows.push([des.fullName, f.name, dist]);
       });
@@ -621,9 +621,26 @@
   function show(id) { document.getElementById(id).classList.remove("hidden"); }
   function hide(id) { document.getElementById(id).classList.add("hidden"); }
 
-  document.getElementById("coords").addEventListener("keydown", e => {
+   document.getElementById("coords").addEventListener("keydown", e => {
     if (e.key === "Enter") runSearchFromCoords();
   });
+
+  function printWithTitle() {
+    const lat = window.lastSearchLat;
+    const lng = window.lastSearchLng;
+    if (lat != null && lng != null) {
+      const prev = document.title;
+      document.title = `protected-sites-${lat.toFixed(5)},${lng.toFixed(5)}-${new Date().toISOString().slice(0,10)}`;
+      window.print();
+      document.title = prev;
+    } else {
+      window.print();
+    }
+  }
+
 </script>
+
+
+
 </body>
 </html>
