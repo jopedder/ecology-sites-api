@@ -335,7 +335,7 @@
         if (!f.rings || f.rings.length === 0) return;
         const polygon = L.polygon(f.rings, {
           color: des.color, fillColor: des.fill,
-          fillOpacity: 0.45, weight: 2, interactive: false,
+          fillOpacity: 0.25, weight: 2, interactive: false,
         }).addTo(leafletMap);
         radiusPolygons.push(polygon);
         legendItems.add(des.id);
