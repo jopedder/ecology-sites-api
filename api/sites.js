@@ -42,12 +42,10 @@ function distToGeometry(searchLat, searchLng, geometry) {
   if (!geometry) return null;
   const rings = geometry.rings || [];
   if (rings.length === 0) return null;
-
   for (const ring of rings) {
     if (ring.length < 3) continue;
     if (pointInRing(searchLng, searchLat, ring)) return 0;
   }
-
   let minDist = Infinity;
   for (const ring of rings) {
     for (let i = 0; i < ring.length - 1; i++) {
@@ -58,25 +56,53 @@ function distToGeometry(searchLat, searchLng, geometry) {
   return minDist === Infinity ? null : minDist;
 }
 
-// Convert ArcGIS rings ([lng,lat] pairs) to Leaflet-ready format ([[lat,lng] pairs])
-// Simplify dense polygons to keep response size reasonable
 function ringsToLeaflet(rings, maxPoints = 500) {
   if (!rings || rings.length === 0) return null;
-  const converted = rings.map(ring => {
-    // Simplify by skipping vertices if ring is very dense
+  return rings.map(ring => {
     const step = Math.max(1, Math.floor(ring.length / maxPoints));
     const simplified = [];
     for (let i = 0; i < ring.length; i += step) {
-      simplified.push([ring[i][1], ring[i][0]]); // flip to [lat, lng] for Leaflet
+      simplified.push([ring[i][1], ring[i][0]]);
     }
-    // Always include last point to close ring
     const last = ring[ring.length - 1];
     if (simplified[simplified.length - 1][0] !== last[1]) {
       simplified.push([last[1], last[0]]);
     }
     return simplified;
   });
-  return converted;
+}
+
+// Abbreviations that should stay in full caps
+const KEEP_CAPS = new Set([
+  "SSSI", "SAC", "SPA", "NNR", "LNR", "NP", "AONB",
+  "UK", "GB", "ES", "NFU", "RSPB", "MOD", "RAF",
+  "II", "III", "IV", "VI", "VII", "VIII", "IX", "XI",
+]);
+
+// Words that should be lowercase unless first word
+const LOWER_WORDS = new Set([
+  "and", "or", "of", "the", "in", "on", "at", "to",
+  "a", "an", "for", "by", "with", "near", "de", "le",
+]);
+
+function toTitleCase(str) {
+  if (!str) return str;
+  // If not all caps / mixed already, return as-is
+  const upper = str.replace(/[^A-Za-z]/g, "");
+  if (upper.length === 0) return str;
+  const isAllCaps = upper === upper.toUpperCase();
+  if (!isAllCaps) return str; // already mixed case, don't touch
+
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word, i) => {
+      const clean = word.replace(/[^a-zA-Z]/g, "").toUpperCase();
+      if (KEEP_CAPS.has(clean)) return clean;
+      if (i > 0 && LOWER_WORDS.has(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
 }
 
 const LAYERS = [
@@ -129,7 +155,7 @@ function extractDesc(attrs, descFields) {
     const val = attrs[f];
     if (val && typeof val === "string" && val.trim().length > 0) {
       const firstSentence = val.split(/\.(\s|$)/)[0];
-      return firstSentence.trim() + (firstSentence.endsWith(".") ? "" : ".");
+      return toTitleCase(firstSentence.trim() + (firstSentence.endsWith(".") ? "" : "."));
     }
   }
   return null;
@@ -187,15 +213,13 @@ export default async function handler(req, res) {
 
         const features = (data.features || []).map((f) => {
           const a = f.attributes || {};
-          const name = a[layer.nameField] || a.NAME || a.SITE_NAME || "Unnamed site";
+          const rawName = a[layer.nameField] || a.NAME || a.SITE_NAME || "Unnamed site";
+          const name = toTitleCase(rawName);
           const status = a.STATUS || a.CATEGORY || "";
           const description = extractDesc(a, layer.descFields);
           const rawDist = distToGeometry(searchLat, searchLng, f.geometry);
           const distanceM = rawDist !== null ? Math.round(rawDist) : null;
-
-          // Pass simplified polygon rings to frontend for drawing
           const rings = f.geometry ? ringsToLeaflet(f.geometry.rings) : null;
-
           return { name, status, description, distanceM, rings };
         });
 
