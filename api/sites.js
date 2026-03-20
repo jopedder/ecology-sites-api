@@ -29,12 +29,6 @@ const LAYERS = [
     descFields: ["QUALIFYING_SPECIES", "REASON", "QUALIFYING_FEATURES", "CITATION"],
   },
   {
-    id: "pspa",
-    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Potential_Special_Protection_Areas_England/FeatureServer/0/query",
-    nameField: "SPA_NAME",
-    descFields: ["QUALIFYING_SPECIES", "REASON", "QUALIFYING_FEATURES"],
-  },
-  {
     id: "ramsar",
     url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Ramsar_England/FeatureServer/0/query",
     nameField: "NAME",
@@ -57,6 +51,22 @@ function extractDesc(attrs, descFields) {
     }
   }
   return null;
+}
+
+function deduplicateByName(features) {
+  const seen = new Map();
+  for (const f of features) {
+    const key = f.name.trim().toLowerCase();
+    if (!seen.has(key)) {
+      seen.set(key, f);
+    } else {
+      const existing = seen.get(key);
+      if (f.distanceM != null && (existing.distanceM == null || f.distanceM < existing.distanceM)) {
+        seen.set(key, f);
+      }
+    }
+  }
+  return Array.from(seen.values());
 }
 
 export default async function handler(req, res) {
@@ -94,7 +104,7 @@ export default async function handler(req, res) {
         const response = await fetch(`${layer.url}?${params}`);
         const data = await response.json();
 
-        results[layer.id] = (data.features || []).map((f) => {
+        const features = (data.features || []).map((f) => {
           const a = f.attributes || {};
           const name = a[layer.nameField] || a.NAME || a.SITE_NAME || "Unnamed site";
           const status = a.STATUS || a.CATEGORY || "";
@@ -106,11 +116,13 @@ export default async function handler(req, res) {
           return { name, status, description, distanceM };
         });
 
-        results[layer.id].sort((a, b) => {
+        features.sort((a, b) => {
           if (a.distanceM == null) return 1;
           if (b.distanceM == null) return -1;
           return a.distanceM - b.distanceM;
         });
+
+        results[layer.id] = deduplicateByName(features);
 
       } catch (e) {
         results[layer.id] = [];
