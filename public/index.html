@@ -74,10 +74,19 @@
       background: linear-gradient(135deg, #166534, #1e40af); color: white;
     }
     button.search-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    /* Map */
     .map-section { display: none; margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 14px; }
     .map-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    #map { width: 100%; height: 280px; border-radius: 8px; border: 1px solid #e5e7eb; }
+    #map { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #e5e7eb; }
     .map-hint { font-size: 11px; color: #9ca3af; margin-top: 5px; text-align: center; }
+
+    /* Map legend */
+    .map-legend { display: none; margin-top: 8px; flex-wrap: wrap; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #374151; }
+    .legend-swatch { width: 14px; height: 10px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.2); flex-shrink: 0; }
+
+    /* Results */
     .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .results-label { font-size: 13px; font-weight: 600; color: #374151; }
     .results-label code { font-family: monospace; color: #1e40af; }
@@ -114,14 +123,32 @@
     .spinner { width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%; border: 2px solid #d1d5db; border-top-color: #6366f1; animation: spin 0.8s linear infinite; }
     .error-msg { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #dc2626; margin-bottom: 10px; }
     .all-clear { text-align: center; padding: 24px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; font-size: 14px; color: #166534; margin-bottom: 8px; }
-    .csv-btn {
-      width: 100%; padding: 9px; border: 1px solid #86efac; border-radius: 8px;
-      margin-bottom: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
-      background: #f0fdf4; color: #166534;
+
+    /* Action buttons row */
+    .action-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .action-btn {
+      flex: 1; padding: 9px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
     }
+    .csv-btn { border: 1px solid #86efac; background: #f0fdf4; color: #166534; }
+    .print-btn { border: 1px solid #bfdbfe; background: #eff6ff; color: #1e40af; }
+
     .footer { margin-top: 10px; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.8; }
     .footer a { color: #1e40af; }
     .hidden { display: none; }
+
+    /* Print styles */
+    @media print {
+      body { background: white; padding: 0; }
+      .panel, .action-row, .footer { display: none !important; }
+      #map { height: 400px !important; border-radius: 0 !important; }
+      .map-section { display: block !important; border: none; padding: 0; margin: 0 0 16px 0; }
+      .map-label { font-size: 13px; margin-bottom: 8px; }
+      .map-legend { display: flex !important; margin-bottom: 12px; }
+      .results-header { margin-top: 16px; }
+      .site-card, .none-card { break-inside: avoid; box-shadow: none; }
+      .print-hide { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -133,7 +160,7 @@
   </div>
   <p class="subtitle">Queries Natural England for SSSI, SAC, SPA, Ramsar, NNR, National Parks and LNR within your chosen radius. <strong>England only.</strong></p>
 
-  <div class="panel">
+  <div class="panel print-hide">
     <div class="tabs">
       <button class="tab active" onclick="switchTab('coords', this)">📍 Coordinates</button>
       <button class="tab" onclick="switchTab('address', this)">🔎 Address search</button>
@@ -185,7 +212,8 @@
     <div class="map-section" id="mapSection">
       <div class="map-label">📍 Search location &amp; radius — drag pin to adjust</div>
       <div id="map"></div>
-      <p class="map-hint">The dashed circle shows your search radius. Drag the pin to correct the location. This is the search area — not the results.</p>
+      <div class="map-legend" id="mapLegend"></div>
+      <p class="map-hint print-hide">The dashed circle shows your search radius. Drag the pin to correct the location.</p>
     </div>
   </div>
 
@@ -201,7 +229,10 @@
     <div id="errorMsg" class="error-msg hidden"></div>
     <div id="siteCards"></div>
     <div id="allClear" class="all-clear hidden">✅ No designated sites found within this radius.</div>
-    <button id="downloadBtn" class="csv-btn hidden" onclick="downloadCSV()">⬇ Download results as CSV</button>
+    <div class="action-row hidden" id="actionRow">
+      <button class="action-btn csv-btn" onclick="downloadCSV()">⬇ Download CSV</button>
+      <button class="action-btn print-btn" onclick="window.print()">🖨 Print</button>
+    </div>
     <div class="footer hidden" id="footer">
       Data: Natural England ArcGIS FeatureServer · Distances to site boundary<br>
       <a href="https://magic.defra.gov.uk/MagicMap.html?chosenLayers=lnrPIndex,lnrIndex,nnrPIndex,nnrIndex,nnrscoPIndex,nnrscoIndex,nnrwalPIndex,nnrwalIndex,npkIndex,ramPIndex,ramIndex,proposedRamsarP,proposedRamsar,ramscoPIndex,ramscoIndex,ramwalPIndex,ramwalIndex,siteunitPIndex,siteunitIndex,sssiPIndex,sssiIndex,sssiscoPIndex,sssiscoIndex,sssiwalPIndex,sssiwalIndex,sacPIndex,sacIndex,sacPossibleP,sacPossible,sacscoPIndex,sacscoIndex,sacwalPIndex,sacwalIndex,spaPIndex,spaIndex,spaPotentialP,spaPotential,spascoPIndex,spascoIndex,spawalPIndex,spawalIndex&box=-517221:-8754:783798:657646"
@@ -214,13 +245,13 @@
 </div>
 <script>
   const DESIGNATIONS = [
-    { id: "sssi",   label: "SSSI",   fullName: "Site of Special Scientific Interest", color: "#166534", bg: "#dcfce7" },
-    { id: "sac",    label: "SAC",    fullName: "Special Area of Conservation",         color: "#1e40af", bg: "#dbeafe" },
-    { id: "spa",    label: "SPA",    fullName: "Special Protection Area",              color: "#6b21a8", bg: "#f3e8ff" },
-    { id: "ramsar", label: "Ramsar", fullName: "Ramsar Wetland",                       color: "#0f766e", bg: "#ccfbf1" },
-    { id: "nnr",    label: "NNR",    fullName: "National Nature Reserve",              color: "#92400e", bg: "#fef3c7" },
-    { id: "np",     label: "NP",     fullName: "National Park",                        color: "#065f46", bg: "#d1fae5" },
-    { id: "lnr",    label: "LNR",    fullName: "Local Nature Reserve",                color: "#b45309", bg: "#fffbeb" },
+    { id: "sssi",   label: "SSSI",   fullName: "Site of Special Scientific Interest", color: "#166534", fill: "#dcfce7", bg: "#dcfce7" },
+    { id: "sac",    label: "SAC",    fullName: "Special Area of Conservation",         color: "#1e40af", fill: "#dbeafe", bg: "#dbeafe" },
+    { id: "spa",    label: "SPA",    fullName: "Special Protection Area",              color: "#6b21a8", fill: "#f3e8ff", bg: "#f3e8ff" },
+    { id: "ramsar", label: "Ramsar", fullName: "Ramsar Wetland",                       color: "#0f766e", fill: "#ccfbf1", bg: "#ccfbf1" },
+    { id: "nnr",    label: "NNR",    fullName: "National Nature Reserve",              color: "#92400e", fill: "#fef3c7", bg: "#fef3c7" },
+    { id: "np",     label: "NP",     fullName: "National Park",                        color: "#065f46", fill: "#d1fae5", bg: "#d1fae5" },
+    { id: "lnr",    label: "LNR",    fullName: "Local Nature Reserve",                color: "#b45309", fill: "#fffbeb", bg: "#fffbeb" },
   ];
 
   let geocodedLat = null;
@@ -228,10 +259,13 @@
   let leafletMap = null;
   let mapPin = null;
   let mapCircle = null;
+  let sitePolygons = []; // track drawn polygons for clearing
 
+  // ── Map ──────────────────────────────────────────────────────────────────────
   function showMap(lat, lng, radiusM) {
     const section = document.getElementById("mapSection");
     section.style.display = "block";
+
     if (!leafletMap) {
       leafletMap = L.map("map", { zoomControl: true, dragging: true }).setView([lat, lng], 13);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -239,8 +273,10 @@
         maxZoom: 19,
       }).addTo(leafletMap);
     }
+
     if (mapPin) { leafletMap.removeLayer(mapPin); mapPin = null; }
     if (mapCircle) { leafletMap.removeLayer(mapCircle); mapCircle = null; }
+
     const redIcon = L.divIcon({
       html: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36">
         <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#dc2626"/>
@@ -248,9 +284,11 @@
       </svg>`,
       iconSize: [24, 36], iconAnchor: [12, 36], className: "",
     });
+
     mapPin = L.marker([lat, lng], { icon: redIcon, draggable: true })
       .addTo(leafletMap)
       .bindPopup(`<b>Search point</b><br>${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+
     mapPin.on("dragend", function(e) {
       const pos = e.target.getLatLng();
       const radius = parseInt(
@@ -268,14 +306,64 @@
       document.getElementById("resolvedCoords").textContent = `Coordinates: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
       mapPin.setPopupContent(`<b>Search point</b><br>${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
     });
+
     mapCircle = L.circle([lat, lng], {
       radius: radiusM, color: "#1e40af", fillColor: "#1e40af",
       fillOpacity: 0.07, weight: 2, dashArray: "6, 5",
     }).addTo(leafletMap);
+
     leafletMap.fitBounds(mapCircle.getBounds(), { padding: [20, 20] });
     setTimeout(() => leafletMap.invalidateSize(), 100);
   }
 
+  function clearSitePolygons() {
+    sitePolygons.forEach(p => leafletMap.removeLayer(p));
+    sitePolygons = [];
+  }
+
+  function drawSitePolygons(data) {
+    if (!leafletMap) return;
+    clearSitePolygons();
+    const legendItems = new Set();
+
+    DESIGNATIONS.forEach(des => {
+      const features = data[des.id] || [];
+      features.forEach(f => {
+        if (!f.rings || f.rings.length === 0) return;
+        // Each rings array is array of [lat,lng] arrays (outer ring + holes)
+        const polygon = L.polygon(f.rings, {
+          color: des.color,
+          fillColor: des.fill,
+          fillOpacity: 0.35,
+          weight: 2,
+        }).addTo(leafletMap);
+        polygon.bindTooltip(f.name, { sticky: true });
+        sitePolygons.push(polygon);
+        legendItems.add(des.id);
+      });
+    });
+
+    // Build legend
+    const legendEl = document.getElementById("mapLegend");
+    if (legendItems.size > 0) {
+      legendEl.style.display = "flex";
+      legendEl.innerHTML = Array.from(legendItems).map(id => {
+        const des = DESIGNATIONS.find(d => d.id === id);
+        return `<div class="legend-item">
+          <div class="legend-swatch" style="background:${des.fill};border-color:${des.color}"></div>
+          <span>${des.label}</span>
+        </div>`;
+      }).join("");
+    } else {
+      legendEl.style.display = "none";
+    }
+
+    // Bring pin and circle to front
+    if (mapCircle) mapCircle.bringToFront();
+    if (mapPin) mapPin.bringToFront();
+  }
+
+  // ── Tabs ─────────────────────────────────────────────────────────────────────
   function switchTab(tab, el) {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
@@ -283,6 +371,7 @@
     el.classList.add("active");
   }
 
+  // ── Geocoding ────────────────────────────────────────────────────────────────
   async function geocodeAddress() {
     const query = document.getElementById("addressInput").value.trim();
     if (!query) return;
@@ -321,6 +410,7 @@
     }
   }
 
+  // ── Coord parsing ─────────────────────────────────────────────────────────────
   function parseCoords(val) {
     const parts = val.trim().split(",").map(s => parseFloat(s.trim()));
     if (parts.length !== 2 || parts.some(isNaN)) return null;
@@ -330,6 +420,7 @@
     return null;
   }
 
+  // ── Search triggers ───────────────────────────────────────────────────────────
   function runSearchFromCoords() {
     const coords = parseCoords(document.getElementById("coords").value);
     if (!coords) { alert("Invalid coordinates — use: lat, lng e.g. 52.23102, -1.71353"); return; }
@@ -345,24 +436,32 @@
     runSearch(geocodedLat, geocodedLng, radius, "searchBtnAddress");
   }
 
+  // ── Core search ───────────────────────────────────────────────────────────────
   async function runSearch(lat, lng, radius, btnId) {
     const btn = document.getElementById(btnId);
     btn.disabled = true; btn.textContent = "⏳ Searching…";
     show("results"); show("loading");
-    hide("errorMsg"); hide("allClear"); hide("countBadge"); hide("downloadBtn"); hide("footer");
+    hide("errorMsg"); hide("allClear"); hide("countBadge"); hide("actionRow"); hide("footer");
     document.getElementById("siteCards").innerHTML = "";
     document.getElementById("resultsLabel").innerHTML =
       `Results within ${(radius/1000).toFixed(1)} km of <code>${lat.toFixed(5)}, ${lng.toFixed(5)}</code>`;
     document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
+
     try {
       const res = await fetch(`/api/sites?lat=${lat}&lng=${lng}&radius=${radius}`);
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json();
+
       window.lastSearchData = data;
       window.lastSearchLat = lat;
       window.lastSearchLng = lng;
       window.lastSearchRadius = radius;
+
       hide("loading");
+
+      // Draw polygons on map
+      drawSitePolygons(data);
+
       let totalFound = 0;
       const cardsHtml = DESIGNATIONS.map(des => {
         const features = data[des.id] || [];
@@ -376,8 +475,8 @@
         }
         const rows = features.map(f => {
           const dist = f.distanceM != null
-  ? (f.distanceM === 0 ? `0.0 km (within site)` : f.distanceM < 1000 ? `${f.distanceM} m` : `${(f.distanceM/1000).toFixed(1)} km`)
-  : null;
+            ? (f.distanceM === 0 ? `0.0 km (within site)` : f.distanceM < 1000 ? `${f.distanceM} m` : `${(f.distanceM/1000).toFixed(1)} km`)
+            : null;
           return `<div class="site-row">
             <div class="site-row-top">
               <div class="site-name">${f.name}</div>
@@ -396,14 +495,16 @@
           <div class="site-card-body">${rows}</div>
         </div>`;
       }).join("");
+
       document.getElementById("siteCards").innerHTML = cardsHtml;
       const badge = document.getElementById("countBadge");
       badge.textContent = `${totalFound} site${totalFound !== 1 ? "s" : ""} found`;
       badge.className = `count-badge ${totalFound > 0 ? "found" : "clear"}`;
       show("countBadge");
       if (totalFound === 0) show("allClear");
-      show("downloadBtn");
+      show("actionRow");
       show("footer");
+
     } catch (e) {
       hide("loading");
       document.getElementById("errorMsg").textContent = `⚠ ${e.message}`;
@@ -413,6 +514,7 @@
     }
   }
 
+  // ── CSV download ──────────────────────────────────────────────────────────────
   function downloadCSV() {
     if (!window.lastSearchData) return;
     const lat = window.lastSearchLat;
@@ -427,8 +529,8 @@
     DESIGNATIONS.forEach(des => {
       (window.lastSearchData[des.id] || []).forEach(f => {
         const dist = f.distanceM != null
-  ? (f.distanceM === 0 ? `0.0 km (within site)` : f.distanceM < 1000 ? `${f.distanceM}m` : `${(f.distanceM/1000).toFixed(1)}km`)
-  : "";
+          ? (f.distanceM === 0 ? `0.0 km (within site)` : f.distanceM < 1000 ? `${f.distanceM}m` : `${(f.distanceM/1000).toFixed(1)}km`)
+          : "";
         rows.push([des.fullName, f.name, f.status || "", dist]);
       });
     });
@@ -440,6 +542,7 @@
     a.click();
   }
 
+  // ── Helpers ───────────────────────────────────────────────────────────────────
   function show(id) { document.getElementById(id).classList.remove("hidden"); }
   function hide(id) { document.getElementById(id).classList.add("hidden"); }
 
