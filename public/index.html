@@ -170,13 +170,13 @@
       <div class="form-row">
         <div class="field grow">
           <label>Coordinates (lat, lng)</label>
-          <input type="text" id="coords" class="coords-input" value="52.23102,-1.71353" placeholder="52.23102, -1.71353" />
+          <input type="text" id="coords" class="coords-input" value="53.31858,-1.61388" placeholder="52.23102, -1.71353" />
         </div>
         <div class="field fixed">
           <label>Radius</label>
           <select id="radius-coords">
             <option value="500">500 m</option>
-            <option value="1000" selected>1,000 m</option>
+            <option value="2000" selected>2,000 m</option>
             <option value="2000">2,000 m</option>
             <option value="5000">5,000 m</option>
           </select>
@@ -200,7 +200,7 @@
           <label>Radius</label>
           <select id="radius-address">
             <option value="500">500 m</option>
-            <option value="1000" selected>1,000 m</option>
+            <option value="1000">1,000 m</option>
             <option value="2000">2,000 m</option>
             <option value="5000">5,000 m</option>
           </select>
@@ -360,7 +360,6 @@
 
     // Bring pin and circle to front
     if (mapCircle) mapCircle.bringToFront();
-    if (mapPin) mapPin.bringToFront();
   }
 
   // ── Tabs ─────────────────────────────────────────────────────────────────────
