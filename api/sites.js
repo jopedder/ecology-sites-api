@@ -35,6 +35,18 @@ const LAYERS = [
     descFields: ["REASON", "CRITERIA", "RAMSAR_CRITERIA", "CITATION"],
   },
   {
+    id: "nnr",
+    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/National_Nature_Reserves_England/FeatureServer/0/query",
+    nameField: "NNR_NAME",
+    descFields: ["REASON", "DESCRIPTION", "DESIGNATION_REASON"],
+  },
+  {
+    id: "np",
+    url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/National_Parks_England/FeatureServer/0/query",
+    nameField: "NAME",
+    descFields: ["DESCRIPTION", "REASON"],
+  },
+  {
     id: "lnr",
     url: "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services/Local_Nature_Reserves_England/FeatureServer/0/query",
     nameField: "LNR_NAME",
