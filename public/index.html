@@ -85,7 +85,7 @@
     .map-hint { font-size: 11px; color: #9ca3af; margin-top: 5px; text-align: center; }
     .map-legend { display: none; margin-top: 8px; flex-wrap: wrap; gap: 8px; }
     .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #374151; }
-    .legend-swatch { width: 14px; height: 10px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.2); flex-shrink: 0; }
+    .legend-swatch { width: 20px; height: 14px; border-radius: 2px; border: 2px solid; flex-shrink: 0; }
 
     .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .results-label { font-size: 13px; font-weight: 600; color: #374151; }
@@ -558,7 +558,7 @@
               <div class="site-name">${f.name}</div>
               ${dist ? `<span class="site-distance">${dist}</span>` : ""}
             </div>
-            ${f.status ? `<div class="site-status">${f.status}</div>` : ""}
+         
             ${f.description ? `<div class="site-desc">${f.description}</div>` : ""}
           </div>`;
         }).join("");
@@ -600,14 +600,14 @@
       ["Search coordinates", `${lat.toFixed(5)}, ${lng.toFixed(5)}`],
       ["Search radius (m)", radius],
       [],
-      ["Designation", "Site Name", "Status", "Distance from search point"],
+      ["Designation", "Site Name", "Distance from search point"],
     ];
     DESIGNATIONS.forEach(des => {
       (window.lastSearchData[des.id] || []).forEach(f => {
         const dist = f.distanceM != null
           ? (f.distanceM === 0 ? `0.0 km (within site)` : f.distanceM < 1000 ? `${f.distanceM}m` : `${(f.distanceM/1000).toFixed(1)}km`)
           : "";
-        rows.push([des.fullName, f.name, f.status || "", dist]);
+        rows.push([des.fullName, f.name, dist]);
       });
     });
     const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
