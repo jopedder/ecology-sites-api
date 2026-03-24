@@ -4,37 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Protected Sites Finder</title>
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #f3f4f6; color: #111827;
-      min-height: 100vh; padding: 24px 16px;
-    }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f3f4f6; color: #111827; min-height: 100vh; padding: 24px 16px; }
     .wrap { max-width: 700px; margin: 0 auto; }
     .header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
-    .logo {
-      width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
-      background: linear-gradient(135deg, #166534, #1e40af);
-      display: flex; align-items: center; justify-content: center; font-size: 18px;
-    }
+    .logo { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(135deg, #166534, #1e40af); display: flex; align-items: center; justify-content: center; font-size: 18px; }
     h1 { font-size: 20px; font-weight: 700; }
     .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 20px; margin-top: 4px; }
-    .panel {
-      background: white; border: 1px solid #e5e7eb;
-      border-radius: 12px; padding: 18px; margin-bottom: 18px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
+    .panel { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .tabs { display: flex; margin-bottom: 14px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-    .tab {
-      flex: 1; padding: 8px; font-size: 13px; font-weight: 600;
-      text-align: center; cursor: pointer; background: #f9fafb;
-      color: #6b7280; border: none; transition: all 0.15s;
-    }
+    .tab { flex: 1; padding: 8px; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer; background: #f9fafb; color: #6b7280; border: none; transition: all 0.15s; }
     .tab.active { background: white; color: #111827; box-shadow: inset 0 -2px 0 #1e40af; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
@@ -43,43 +25,39 @@
     .field.grow { flex: 1; min-width: 200px; }
     .field.fixed { width: 140px; }
     label { font-size: 11px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
-    input, select {
-      padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 7px;
-      font-size: 14px; outline: none; width: 100%; transition: border-color 0.15s;
-    }
+    input, select { padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 7px; font-size: 14px; outline: none; width: 100%; transition: border-color 0.15s; }
     input.coords-input { font-family: monospace; }
     input:focus, select:focus { border-color: #6366f1; }
     .addr-row { display: flex; gap: 8px; margin-bottom: 12px; }
     .addr-row input { flex: 1; }
-    .addr-btn {
-      padding: 9px 14px; border: none; border-radius: 7px;
-      font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
-      background: #f3f4f6; color: #374151;
-    }
+    .addr-btn { padding: 9px 14px; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; background: #f3f4f6; color: #374151; }
     .addr-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .geocode-result {
-      font-size: 12px; margin-bottom: 10px; padding: 8px 10px;
-      border-radius: 6px; display: none;
-    }
+    .geocode-result { font-size: 12px; margin-bottom: 10px; padding: 8px 10px; border-radius: 6px; display: none; }
     .geocode-result.success { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
     .geocode-result.error { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
-    .resolved-coords {
-      font-size: 12px; color: #6b7280; margin-bottom: 10px;
-      padding: 6px 10px; background: #f9fafb; border-radius: 6px;
-      border: 1px solid #e5e7eb; display: none; font-family: monospace;
+    .resolved-coords { font-size: 12px; color: #6b7280; margin-bottom: 10px; padding: 6px 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb; display: none; font-family: monospace; }
+
+    /* Layer toggles */
+    .layers-section { margin-bottom: 14px; }
+    .layers-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .layers-title { font-size: 11px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; }
+    .layers-expand { font-size: 11px; color: #6b7280; cursor: pointer; background: none; border: none; padding: 0; text-decoration: underline; }
+    .layer-group { margin-bottom: 6px; }
+    .layer-group-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .layer-toggles { display: flex; flex-wrap: wrap; gap: 5px; }
+    .layer-toggle {
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+      border: 1.5px solid var(--col); color: var(--col); background: white;
     }
-    button.search-btn {
-      width: 100%; padding: 11px; border: none; border-radius: 8px;
-      font-size: 14px; font-weight: 600; cursor: pointer;
-      background: linear-gradient(135deg, #166534, #1e40af); color: white;
-    }
+    .layer-toggle.active { background: var(--col); color: white; }
+    .optional-layers { display: none; }
+    .optional-layers.expanded { display: block; }
+
+    button.search-btn { width: 100%; padding: 11px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #166534, #1e40af); color: white; }
     button.search-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 
-    .map-section {
-      display: none; background: white; border: 1px solid #e5e7eb;
-      border-radius: 12px; padding: 14px; margin-bottom: 18px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
+    .map-section { display: none; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .map-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     #map { width: 100%; height: 320px; border-radius: 8px; border: 1px solid #e5e7eb; }
     .map-hint { font-size: 11px; color: #9ca3af; margin-top: 5px; text-align: center; }
@@ -95,11 +73,7 @@
     .count-badge.clear { background: #f0fdf4; color: #166534; border-color: #86efac; }
     .site-card { border-radius: 8px; margin-bottom: 8px; overflow: hidden; border: 1px solid; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
     .site-card-header { padding: 8px 14px; display: flex; align-items: center; gap: 8px; }
-    .badge {
-      background: white; border-radius: 4px; padding: 1px 7px;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
-      border: 1px solid rgba(0,0,0,0.12); white-space: nowrap;
-    }
+    .badge { background: white; border-radius: 4px; padding: 1px 7px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; border: 1px solid rgba(0,0,0,0.12); white-space: nowrap; }
     .card-title { font-weight: 600; font-size: 13px; }
     .count-pill { margin-left: auto; color: white; border-radius: 10px; padding: 1px 9px; font-size: 11px; font-weight: 700; }
     .site-card-body { background: white; }
@@ -108,14 +82,7 @@
     .site-row-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .site-name { font-weight: 600; color: #111827; }
     .site-distance { font-size: 12px; font-weight: 600; white-space: nowrap; background: #f3f4f6; color: #374151; border-radius: 10px; padding: 2px 8px; flex-shrink: 0; }
-    .site-status { color: #6b7280; font-size: 12px; margin-top: 3px; }
-    .site-desc { color: #4b5563; font-size: 12px; margin-top: 4px; line-height: 1.5; }
-    .none-card {
-      border: 1px solid #e5e7eb; border-left: 4px solid #d1d5db;
-      border-radius: 8px; margin-bottom: 6px;
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 14px; background: #f9fafb;
-    }
+    .none-card { border: 1px solid #e5e7eb; border-left: 4px solid #d1d5db; border-radius: 8px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: #f9fafb; }
     .none-label { font-size: 13px; color: #9ca3af; }
     .none-tag { margin-left: auto; font-size: 12px; color: #d1d5db; }
     .loading { display: flex; align-items: center; gap: 10px; color: #6b7280; font-size: 13px; padding: 12px 0; }
@@ -145,12 +112,11 @@
 </head>
 <body>
 <div class="wrap">
-
   <div class="header">
     <div class="logo">🗺️</div>
     <h1>Protected Sites Finder</h1>
   </div>
-  <p class="subtitle">Queries Natural England for SSSI, SAC, SPA, Ramsar, NNR, National Parks and LNR within your chosen radius. <strong>England only.</strong></p>
+  <p class="subtitle">Queries Natural England, NatureScot, NRW Wales and NIEA for designated sites across the UK within your chosen radius.</p>
 
   <div class="panel print-hide">
     <div class="tabs">
@@ -174,7 +140,6 @@
           </select>
         </div>
       </div>
-      <button class="search-btn" id="searchBtnCoords" onclick="runSearchFromCoords()">🔍 Search</button>
     </div>
 
     <div class="tab-panel" id="tab-address">
@@ -198,16 +163,35 @@
           </select>
         </div>
       </div>
-      <button class="search-btn" id="searchBtnAddress" onclick="runSearchFromAddress()" disabled>🔍 Search</button>
     </div>
+
+    <!-- Layer toggles -->
+    <div class="layers-section">
+      <div class="layers-header">
+        <span class="layers-title">Layers</span>
+        <button class="layers-expand" onclick="toggleOptional(this)">+ Additional England layers</button>
+      </div>
+      <div class="layer-group">
+        <div class="layer-group-label">Core designations (UK-wide)</div>
+        <div class="layer-toggles" id="core-toggles"></div>
+      </div>
+      <div class="optional-layers" id="optional-layers">
+        <div class="layer-group">
+          <div class="layer-group-label">Additional layers (England only)</div>
+          <div class="layer-toggles" id="optional-toggles"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="search-btn" id="searchBtnCoords" onclick="runSearchFromCoords()">🔍 Search</button>
+    <button class="search-btn hidden" id="searchBtnAddress" onclick="runSearchFromAddress()">🔍 Search</button>
   </div>
 
-  <!-- Map outside panel for print -->
   <div class="map-section" id="mapSection">
     <div class="map-label">📍 Search location &amp; radius</div>
     <div id="map"></div>
     <div class="map-legend" id="mapLegend"></div>
-    <p class="map-hint print-hide">Drag the pin to adjust location. Shaded areas show all designated sites in the current map view. Hover to see site names.</p>
+    <p class="map-hint print-hide">Drag the pin to adjust location. Shaded areas show designated sites in the current map view. Hover to see names.</p>
   </div>
 
   <div id="results" class="hidden">
@@ -215,10 +199,7 @@
       <span class="results-label" id="resultsLabel"></span>
       <span class="count-badge hidden" id="countBadge"></span>
     </div>
-    <div id="loading" class="loading hidden">
-      <div class="spinner"></div>
-      Fetching from Natural England ArcGIS…
-    </div>
+    <div id="loading" class="loading hidden"><div class="spinner"></div>Fetching from designation databases…</div>
     <div id="errorMsg" class="error-msg hidden"></div>
     <div id="siteCards"></div>
     <div id="allClear" class="all-clear hidden">✅ No designated sites found within this radius.</div>
@@ -227,420 +208,332 @@
       <button class="action-btn print-btn" onclick="printWithTitle()">🖨 Print</button>
     </div>
     <div class="footer hidden" id="footer">
-      Data: Natural England ArcGIS FeatureServer · Distances to site boundary<br>
-      <a href="https://magic.defra.gov.uk/MagicMap.html?chosenLayers=lnrPIndex,lnrIndex,nnrPIndex,nnrIndex,nnrscoPIndex,nnrscoIndex,nnrwalPIndex,nnrwalIndex,npkIndex,ramPIndex,ramIndex,proposedRamsarP,proposedRamsar,ramscoPIndex,ramscoIndex,ramwalPIndex,ramwalIndex,siteunitPIndex,siteunitIndex,sssiPIndex,sssiIndex,sssiscoPIndex,sssiscoIndex,sssiwalPIndex,sssiwalIndex,sacPIndex,sacIndex,sacPossibleP,sacPossible,sacscoPIndex,sacscoIndex,sacwalPIndex,sacwalIndex,spaPIndex,spaIndex,spaPotentialP,spaPotential,spascoPIndex,spascoIndex,spawalPIndex,spawalIndex&box=-517221:-8754:783798:657646"
-         target="_blank" rel="noopener">
-        Verify on MAGIC (inc. proposed &amp; possible sites) ↗
-      </a>
+      England: Natural England · Scotland: NatureScot · Wales: NRW · NI: NIEA · Distances to site boundary<br>
+      <a href="https://magic.defra.gov.uk/MagicMap.html?chosenLayers=lnrPIndex,lnrIndex,nnrPIndex,nnrIndex,nnrscoPIndex,nnrscoIndex,nnrwalPIndex,nnrwalIndex,npkIndex,ramPIndex,ramIndex,proposedRamsarP,proposedRamsar,ramscoPIndex,ramscoIndex,ramwalPIndex,ramwalIndex,siteunitPIndex,siteunitIndex,sssiPIndex,sssiIndex,sssiscoPIndex,sssiscoIndex,sssiwalPIndex,sssiwalIndex,sacPIndex,sacIndex,sacPossibleP,sacPossible,sacscoPIndex,sacscoIndex,sacwalPIndex,sacwalIndex,spaPIndex,spaIndex,spaPotentialP,spaPotential,spascoPIndex,spascoIndex,spawalPIndex,spawalIndex&box=-517221:-8754:783798:657646" target="_blank" rel="noopener">Verify on MAGIC (inc. proposed &amp; possible sites) ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://sitelink.nature.scot/" target="_blank" rel="noopener">Scotland SiteLink ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://www.daera-ni.gov.uk/topics/nature-and-biodiversity/protected-areas-and-species" target="_blank" rel="noopener">NI Protected Areas ↗</a>
     </div>
   </div>
-
 </div>
+
 <script>
-  const DESIGNATIONS = [
-    { id: "sssi",   label: "SSSI",   fullName: "Site of Special Scientific Interest", color: "#166534", fill: "#dcfce7", bg: "#dcfce7" },
-    { id: "sac",    label: "SAC",    fullName: "Special Area of Conservation",         color: "#1e40af", fill: "#dbeafe", bg: "#dbeafe" },
-    { id: "spa",    label: "SPA",    fullName: "Special Protection Area",              color: "#6b21a8", fill: "#f3e8ff", bg: "#f3e8ff" },
-    { id: "ramsar", label: "Ramsar", fullName: "Ramsar Wetland",                       color: "#0f766e", fill: "#ccfbf1", bg: "#ccfbf1" },
-    { id: "nnr",    label: "NNR",    fullName: "National Nature Reserve",              color: "#92400e", fill: "#fef3c7", bg: "#fef3c7" },
-    { id: "np",     label: "NP",     fullName: "National Park",                        color: "#065f46", fill: "#d1fae5", bg: "#d1fae5" },
-    { id: "lnr",    label: "LNR",    fullName: "Local Nature Reserve",                color: "#b45309", fill: "#fffbeb", bg: "#fffbeb" },
-  ];
+const DESIGNATIONS = [
+  // Core
+  { id:"sssi",   label:"SSSI",        fullName:"Site of Special Scientific Interest / ASSI", color:"#166534", fill:"#dcfce7", bg:"#dcfce7", core:true },
+  { id:"sac",    label:"SAC",         fullName:"Special Area of Conservation",               color:"#1e40af", fill:"#dbeafe", bg:"#dbeafe", core:true },
+  { id:"spa",    label:"SPA",         fullName:"Special Protection Area",                    color:"#6b21a8", fill:"#f3e8ff", bg:"#f3e8ff", core:true },
+  { id:"ramsar", label:"Ramsar",      fullName:"Ramsar Wetland",                             color:"#0f766e", fill:"#ccfbf1", bg:"#ccfbf1", core:true },
+  { id:"nnr",    label:"NNR",         fullName:"National Nature Reserve",                    color:"#92400e", fill:"#fef3c7", bg:"#fef3c7", core:true },
+  { id:"np",     label:"NP",          fullName:"National Park",                              color:"#065f46", fill:"#d1fae5", bg:"#d1fae5", core:true },
+  { id:"lnr",    label:"LNR",         fullName:"Local Nature Reserve",                       color:"#b45309", fill:"#fffbeb", bg:"#fffbeb", core:true },
+  // Optional England layers
+  { id:"aonb",   label:"AONB",        fullName:"Area of Outstanding Natural Beauty",         color:"#7c3aed", fill:"#f5f3ff", bg:"#f5f3ff", core:false },
+  { id:"lpo",    label:"LPO",         fullName:"Limestone Pavement Order",                   color:"#0e7490", fill:"#e0f2fe", bg:"#e0f2fe", core:false },
+  { id:"cp",     label:"Country Park",fullName:"Country Park",                               color:"#be185d", fill:"#fdf2f8", bg:"#fdf2f8", core:false },
+  { id:"aw",     label:"Anc. Wood.",  fullName:"Ancient Woodland",                           color:"#57534e", fill:"#f5f5f4", bg:"#f5f5f4", core:false },
+  { id:"phi",    label:"PHI",         fullName:"Priority Habitats Inventory",                color:"#4d7c0f", fill:"#f7fee7", bg:"#f7fee7", core:false },
+  { id:"wpp",    label:"Wood Pasture",fullName:"Wood Pasture & Parkland",                    color:"#0369a1", fill:"#e0f2fe", bg:"#f0f9ff", core:false },
+  { id:"to",     label:"Orchards",    fullName:"Traditional Orchards",                       color:"#c2410c", fill:"#fff7ed", bg:"#fff7ed", core:false },
+  { id:"cr",     label:"Chalk Rivers",fullName:"Chalk Rivers",                               color:"#1d4ed8", fill:"#eff6ff", bg:"#eff6ff", core:false },
+  { id:"nia",    label:"NIA",         fullName:"Nature Improvement Area",                    color:"#6b7280", fill:"#f9fafb", bg:"#f9fafb", core:false },
+  { id:"nca",    label:"NCA",         fullName:"National Character Area",                    color:"#854d0e", fill:"#fefce8", bg:"#fefce8", core:false },
+];
 
-  let geocodedLat = null;
-  let geocodedLng = null;
-  let leafletMap = null;
-  let mapPin = null;
-  let mapCircle = null;
-  let radiusPolygons = [];   // solid — within search radius
-  let viewportPolygons = []; // lighter — whole map view
-  let bboxDebounce = null;
-  let allMapFeatures = [];   // for hover across both layers
+// Build toggle buttons
+const coreContainer = document.getElementById("core-toggles");
+const optContainer = document.getElementById("optional-toggles");
+DESIGNATIONS.forEach(des => {
+  const btn = document.createElement("button");
+  btn.className = "layer-toggle" + (des.core ? " active" : "");
+  btn.dataset.id = des.id;
+  btn.textContent = des.label;
+  btn.style.setProperty("--col", des.color);
+  btn.title = des.fullName;
+  btn.onclick = () => btn.classList.toggle("active");
+  (des.core ? coreContainer : optContainer).appendChild(btn);
+});
 
-  // ── Map setup ────────────────────────────────────────────────────────────────
-  function showMap(lat, lng, radiusM) {
-    const section = document.getElementById("mapSection");
-    section.style.display = "block";
+function getActiveLayers() {
+  return [...document.querySelectorAll(".layer-toggle.active")].map(b => b.dataset.id).join(",");
+}
 
-    if (!leafletMap) {
-      leafletMap = L.map("map", { zoomControl: true, dragging: true }).setView([lat, lng], 13);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-      }).addTo(leafletMap);
+function toggleOptional(btn) {
+  const panel = document.getElementById("optional-layers");
+  const expanded = panel.classList.toggle("expanded");
+  btn.textContent = expanded ? "− Additional England layers" : "+ Additional England layers";
+}
 
-      // Refresh viewport polygons on pan/zoom (debounced)
-      leafletMap.on("moveend zoomend", () => {
-        clearTimeout(bboxDebounce);
-        bboxDebounce = setTimeout(fetchViewportSites, 600);
-      });
-    }
+// Show correct search button per tab
+function switchTab(tab, el) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+  el.classList.add("active");
+  show("searchBtn" + (tab === "coords" ? "Coords" : "Address"));
+  hide("searchBtn" + (tab === "coords" ? "Address" : "Coords"));
+}
 
-    if (mapPin) { leafletMap.removeLayer(mapPin); mapPin = null; }
-    if (mapCircle) { leafletMap.removeLayer(mapCircle); mapCircle = null; }
+let geocodedLat = null, geocodedLng = null;
+let leafletMap = null, mapPin = null, mapCircle = null;
+let radiusPolygons = [], viewportPolygons = [], allMapFeatures = [];
+let bboxDebounce = null;
 
-    const redIcon = L.divIcon({
-      html: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36">
-        <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#dc2626"/>
-        <circle cx="12" cy="12" r="5" fill="white"/>
-      </svg>`,
-      iconSize: [24, 36], iconAnchor: [12, 36], className: "",
-    });
-
-    mapPin = L.marker([lat, lng], { icon: redIcon, draggable: true })
-      .addTo(leafletMap)
-      .bindPopup(`<b>Search point</b><br>${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-
-    mapPin.on("dragend", function(e) {
-      const pos = e.target.getLatLng();
-      const radius = parseInt(
-        document.getElementById("radius-coords").value ||
-        document.getElementById("radius-address").value
-      );
-      if (mapCircle) { leafletMap.removeLayer(mapCircle); }
-      mapCircle = L.circle([pos.lat, pos.lng], {
-        radius, color: "#1e40af", fillColor: "#1e40af",
-        fillOpacity: 0.07, weight: 2, dashArray: "6, 5",
-      }).addTo(leafletMap);
-      geocodedLat = pos.lat;
-      geocodedLng = pos.lng;
-      document.getElementById("coords").value = `${pos.lat.toFixed(5)},${pos.lng.toFixed(5)}`;
-      document.getElementById("resolvedCoords").textContent = `Coordinates: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
-      mapPin.setPopupContent(`<b>Search point</b><br>${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
-    });
-
-    mapCircle = L.circle([lat, lng], {
-      radius: radiusM, color: "#1e40af", fillColor: "#1e40af",
-      fillOpacity: 0.07, weight: 2, dashArray: "6, 5",
+function showMap(lat, lng, radiusM) {
+  document.getElementById("mapSection").style.display = "block";
+  if (!leafletMap) {
+    leafletMap = L.map("map", { zoomControl: true, dragging: true }).setView([lat, lng], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19,
     }).addTo(leafletMap);
-
-    leafletMap.fitBounds(mapCircle.getBounds(), { padding: [20, 20] });
-    setTimeout(() => leafletMap.invalidateSize(), 100);
+    leafletMap.on("moveend zoomend", () => {
+      clearTimeout(bboxDebounce);
+      bboxDebounce = setTimeout(fetchViewportSites, 600);
+    });
   }
+  if (mapPin) { leafletMap.removeLayer(mapPin); mapPin = null; }
+  if (mapCircle) { leafletMap.removeLayer(mapCircle); mapCircle = null; }
 
-  // ── Radius polygons (solid, from search results) ──────────────────────────
-  function clearRadiusPolygons() {
-    radiusPolygons.forEach(p => leafletMap.removeLayer(p));
-    radiusPolygons = [];
-  }
+  const redIcon = L.divIcon({
+    html: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0z" fill="#dc2626"/><circle cx="12" cy="12" r="5" fill="white"/></svg>`,
+    iconSize: [24,36], iconAnchor: [12,36], className: "",
+  });
+  mapPin = L.marker([lat, lng], { icon: redIcon, draggable: true }).addTo(leafletMap)
+    .bindPopup(`<b>Search point</b><br>${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+  mapPin.on("dragend", e => {
+    const pos = e.target.getLatLng();
+    const r = parseInt(document.getElementById("radius-coords").value || document.getElementById("radius-address").value);
+    if (mapCircle) leafletMap.removeLayer(mapCircle);
+    mapCircle = L.circle([pos.lat, pos.lng], { radius: r, color: "#1e40af", fillColor: "#1e40af", fillOpacity: 0.07, weight: 2, dashArray: "6,5" }).addTo(leafletMap);
+    geocodedLat = pos.lat; geocodedLng = pos.lng;
+    document.getElementById("coords").value = `${pos.lat.toFixed(5)},${pos.lng.toFixed(5)}`;
+    document.getElementById("resolvedCoords").textContent = `Coordinates: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
+    mapPin.setPopupContent(`<b>Search point</b><br>${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
+  });
+  mapCircle = L.circle([lat, lng], { radius: radiusM, color: "#1e40af", fillColor: "#1e40af", fillOpacity: 0.07, weight: 2, dashArray: "6,5" }).addTo(leafletMap);
+  leafletMap.fitBounds(mapCircle.getBounds(), { padding: [20,20] });
+  setTimeout(() => leafletMap.invalidateSize(), 100);
+}
 
-  function drawRadiusPolygons(data) {
-    clearRadiusPolygons();
-    const legendItems = new Set();
-    // Remove radius features from allMapFeatures then re-add
-    allMapFeatures = allMapFeatures.filter(f => f.source !== "radius");
+function clearRadiusPolygons() {
+  radiusPolygons.forEach(p => leafletMap.removeLayer(p)); radiusPolygons = [];
+  allMapFeatures = allMapFeatures.filter(f => f.source !== "radius");
+}
+function clearViewportPolygons() {
+  viewportPolygons.forEach(p => leafletMap.removeLayer(p)); viewportPolygons = [];
+  allMapFeatures = allMapFeatures.filter(f => f.source !== "viewport");
+  if (leafletMap?._hoverHandler) { leafletMap.off("mousemove", leafletMap._hoverHandler); leafletMap._hoverHandler = null; }
+}
 
+function drawRadiusPolygons(data) {
+  clearRadiusPolygons();
+  const legendItems = new Set();
+  DESIGNATIONS.forEach(des => {
+    (data[des.id] || []).forEach(f => {
+      if (!f.rings?.length) return;
+      const polygon = L.polygon(f.rings, { color: des.color, fillColor: des.fill, fillOpacity: 0.12, weight: 2, interactive: false }).addTo(leafletMap);
+      radiusPolygons.push(polygon);
+      legendItems.add(des.id);
+      allMapFeatures.push({ polygon, name: f.name, label: des.label, source: "radius" });
+    });
+  });
+  updateLegend(legendItems);
+  refreshHoverHandler();
+  if (mapCircle) mapCircle.bringToFront();
+}
+
+async function fetchViewportSites() {
+  if (!leafletMap) return;
+  const b = leafletMap.getBounds();
+  const activeLayers = getActiveLayers();
+  const bbox = `${b.getWest()},${b.getSouth()},${b.getEast()},${b.getNorth()}`;
+  try {
+    const r = await fetch(`/api/bbox?bbox=${bbox}&layers=${activeLayers}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    clearViewportPolygons();
+    const legendItems = new Set(radiusPolygons.length > 0 ? allMapFeatures.filter(f => f.source==="radius").map(f => f.label) : []);
     DESIGNATIONS.forEach(des => {
       (data[des.id] || []).forEach(f => {
-        if (!f.rings || f.rings.length === 0) return;
-        const polygon = L.polygon(f.rings, {
-          color: des.color, fillColor: des.fill,
-          fillOpacity: 0.12, weight: 2, interactive: false,
-        }).addTo(leafletMap);
-        radiusPolygons.push(polygon);
+        if (!f.rings?.length) return;
+        const already = allMapFeatures.some(m => m.source==="radius" && m.name.toLowerCase()===f.name.toLowerCase() && m.label===des.label);
+        if (already) return;
+        const polygon = L.polygon(f.rings, { color: des.color, fillColor: des.fill, fillOpacity: 0.10, weight: 1.5, dashArray: "3,4", interactive: false }).addTo(leafletMap);
+        viewportPolygons.push(polygon);
         legendItems.add(des.id);
-        allMapFeatures.push({ polygon, name: f.name, label: des.label, source: "radius" });
+        allMapFeatures.push({ polygon, name: f.name, label: des.label, source: "viewport" });
       });
     });
-
     updateLegend(legendItems);
     refreshHoverHandler();
     if (mapCircle) mapCircle.bringToFront();
+  } catch(e) {}
+}
+
+function updateLegend(legendItems) {
+  const el = document.getElementById("mapLegend");
+  if (legendItems.size > 0) {
+    el.style.display = "flex";
+    el.innerHTML = [...legendItems].map(id => {
+      const des = DESIGNATIONS.find(d => d.id === id);
+      return des ? `<div class="legend-item"><div class="legend-swatch" style="background:${des.fill};border-color:${des.color}"></div><span>${des.label}</span></div>` : "";
+    }).join("");
+  } else {
+    el.style.display = "none";
   }
+}
 
-  // ── Viewport polygons (lighter, whole map view) ───────────────────────────
-  function clearViewportPolygons() {
-    viewportPolygons.forEach(p => leafletMap.removeLayer(p));
-    viewportPolygons = [];
-    allMapFeatures = allMapFeatures.filter(f => f.source !== "viewport");
-  }
+function refreshHoverHandler() {
+  if (!leafletMap) return;
+  if (leafletMap._hoverTooltip) leafletMap._hoverTooltip.remove();
+  if (leafletMap._hoverHandler) leafletMap.off("mousemove", leafletMap._hoverHandler);
+  const tooltip = L.tooltip({ sticky: true, opacity: 0.95 });
+  leafletMap._hoverTooltip = tooltip;
+  leafletMap._hoverHandler = e => {
+    const hits = allMapFeatures.filter(f => f.polygon.getBounds().contains(e.latlng));
+    if (hits.length > 0) {
+      tooltip.setContent(hits.map(h => `<b>${h.label}:</b> ${h.name}`).join("<br>")).setLatLng(e.latlng).addTo(leafletMap);
+    } else { tooltip.remove(); }
+  };
+  leafletMap.on("mousemove", leafletMap._hoverHandler);
+  leafletMap.on("mouseout", () => tooltip.remove());
+}
 
-  async function fetchViewportSites() {
-    if (!leafletMap) return;
-    const b = leafletMap.getBounds();
-    const bbox = `${b.getWest()},${b.getSouth()},${b.getEast()},${b.getNorth()}`;
-    try {
-      const res = await fetch(`/api/bbox?bbox=${bbox}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      clearViewportPolygons();
-      const legendItems = new Set(
-        radiusPolygons.length > 0
-          ? DESIGNATIONS.filter(d => (window.lastSearchData?.[d.id]?.length ?? 0) > 0).map(d => d.id)
-          : []
-      );
+async function geocodeAddress() {
+  const query = document.getElementById("addressInput").value.trim();
+  if (!query) return;
+  const btn = document.getElementById("geocodeBtn");
+  const resultEl = document.getElementById("geocodeResult");
+  const coordsEl = document.getElementById("resolvedCoords");
+  btn.disabled = true; btn.textContent = "…";
+  resultEl.style.display = "none"; coordsEl.style.display = "none";
+  geocodedLat = null; geocodedLng = null;
+  document.getElementById("searchBtnAddress").disabled = true;
+  try {
+    const r = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+    const data = await r.json();
+    if (!data?.length) { resultEl.className = "geocode-result error"; resultEl.textContent = "Address not found."; resultEl.style.display = "block"; return; }
+    geocodedLat = parseFloat(data[0].lat); geocodedLng = parseFloat(data[0].lon);
+    resultEl.className = "geocode-result success";
+    resultEl.textContent = `✓ Found: ${data[0].display_name}`;
+    resultEl.style.display = "block";
+    coordsEl.textContent = `Coordinates: ${geocodedLat.toFixed(5)}, ${geocodedLng.toFixed(5)}`;
+    coordsEl.style.display = "block";
+    document.getElementById("searchBtnAddress").disabled = false;
+    showMap(geocodedLat, geocodedLng, parseInt(document.getElementById("radius-address").value));
+  } catch(e) {
+    resultEl.className = "geocode-result error"; resultEl.textContent = "Geocoding failed."; resultEl.style.display = "block";
+  } finally { btn.disabled = false; btn.textContent = "Find"; }
+}
 
-      DESIGNATIONS.forEach(des => {
-        (data[des.id] || []).forEach(f => {
-          if (!f.rings || f.rings.length === 0) return;
-          // Skip if already drawn as a radius polygon (same name)
-          const alreadyDrawn = allMapFeatures.some(
-            m => m.source === "radius" && m.name.toLowerCase() === f.name.toLowerCase() && m.label === des.label
-          );
-          if (alreadyDrawn) return;
+function parseCoords(val) {
+  const parts = val.trim().split(",").map(s => parseFloat(s.trim()));
+  if (parts.length !== 2 || parts.some(isNaN)) return null;
+  const [a, b] = parts;
+  if (Math.abs(a) <= 90 && Math.abs(b) <= 180) return { lat: a, lng: b };
+  if (Math.abs(b) <= 90 && Math.abs(a) <= 180) return { lat: b, lng: a };
+  return null;
+}
 
-          const polygon = L.polygon(f.rings, {
-            color: des.color, fillColor: des.fill,
-            fillOpacity: 0.10, weight: 1.5,
-            dashArray: "3, 4", interactive: false,
-          }).addTo(leafletMap);
-          viewportPolygons.push(polygon);
-          legendItems.add(des.id);
-          allMapFeatures.push({ polygon, name: f.name, label: des.label, source: "viewport" });
-        });
-      });
+function runSearchFromCoords() {
+  const coords = parseCoords(document.getElementById("coords").value);
+  if (!coords) { alert("Invalid coordinates — use: lat, lng"); return; }
+  const radius = parseInt(document.getElementById("radius-coords").value);
+  showMap(coords.lat, coords.lng, radius);
+  runSearch(coords.lat, coords.lng, radius, "searchBtnCoords");
+}
+function runSearchFromAddress() {
+  if (geocodedLat == null) { alert("Please find an address first."); return; }
+  const radius = parseInt(document.getElementById("radius-address").value);
+  showMap(geocodedLat, geocodedLng, radius);
+  runSearch(geocodedLat, geocodedLng, radius, "searchBtnAddress");
+}
 
-      updateLegend(legendItems);
-      refreshHoverHandler();
-      if (mapCircle) mapCircle.bringToFront();
-      if (mapPin) mapPin.bringToFront && mapPin.bringToFront();
+async function runSearch(lat, lng, radius, btnId) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = true; btn.textContent = "⏳ Searching…";
+  show("results"); show("loading");
+  hide("errorMsg"); hide("allClear"); hide("countBadge"); hide("actionRow"); hide("footer");
+  document.getElementById("siteCards").innerHTML = "";
+  document.getElementById("resultsLabel").innerHTML = `Results within ${(radius/1000).toFixed(1)} km of <code>${lat.toFixed(5)}, ${lng.toFixed(5)}</code>`;
+  document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
 
-    } catch (e) {
-      // silently fail — viewport layer is supplementary
-    }
-  }
+  try {
+    const layers = getActiveLayers();
+    const r = await fetch(`/api/sites?lat=${lat}&lng=${lng}&radius=${radius}&layers=${layers}`);
+    if (!r.ok) throw new Error(`Server error ${r.status}`);
+    const data = await r.json();
+    window.lastSearchData = data; window.lastSearchLat = lat; window.lastSearchLng = lng; window.lastSearchRadius = radius;
+    hide("loading");
+    drawRadiusPolygons(data);
+    fetchViewportSites();
 
-  // ── Legend ────────────────────────────────────────────────────────────────
-  function updateLegend(legendItems) {
-    const legendEl = document.getElementById("mapLegend");
-    if (legendItems.size > 0) {
-      legendEl.style.display = "flex";
-      legendEl.innerHTML = Array.from(legendItems).map(id => {
-        const des = DESIGNATIONS.find(d => d.id === id);
-        return `<div class="legend-item">
-          <div class="legend-swatch" style="background:${des.fill};border-color:${des.color}"></div>
-          <span>${des.label}</span>
-        </div>`;
+    const activeDes = DESIGNATIONS.filter(d => layers.split(",").includes(d.id));
+    let totalFound = 0;
+    const cardsHtml = activeDes.map(des => {
+      const features = data[des.id] || [];
+      totalFound += features.length;
+      if (!features.length) return `<div class="none-card" style="border-left-color:${des.color}">
+        <span class="badge" style="color:${des.color};border-color:${des.color}40">${des.label}</span>
+        <span class="none-label">${des.fullName}</span>
+        <span class="none-tag">None within radius</span>
+      </div>`;
+      const rows = features.map(f => {
+        const dist = f.distanceM != null ? (f.distanceM === 0 ? "0.00 km (within site)" : `${(f.distanceM/1000).toFixed(2)} km`) : null;
+        return `<div class="site-row"><div class="site-row-top"><div class="site-name">${f.name}</div>${dist ? `<span class="site-distance">${dist}</span>` : ""}</div></div>`;
       }).join("");
-    } else {
-      legendEl.style.display = "none";
-    }
-  }
+      return `<div class="site-card" style="border-color:${des.color}30;border-left:4px solid ${des.color}">
+        <div class="site-card-header" style="background:${des.bg}">
+          <span class="badge" style="color:${des.color};border-color:${des.color}40">${des.label}</span>
+          <span class="card-title" style="color:${des.color}">${des.fullName}</span>
+          <span class="count-pill" style="background:${des.color}">${features.length} found</span>
+        </div>
+        <div class="site-card-body">${rows}</div>
+      </div>`;
+    }).join("");
 
-  // ── Hover ─────────────────────────────────────────────────────────────────
-  function refreshHoverHandler() {
-    if (!leafletMap) return;
-    if (leafletMap._hoverTooltip) leafletMap._hoverTooltip.remove();
-    if (leafletMap._hoverHandler) leafletMap.off("mousemove", leafletMap._hoverHandler);
+    document.getElementById("siteCards").innerHTML = cardsHtml;
+    const badge = document.getElementById("countBadge");
+    badge.textContent = `${totalFound} site${totalFound!==1?"s":""} found`;
+    badge.className = `count-badge ${totalFound>0?"found":"clear"}`;
+    show("countBadge"); if (totalFound===0) show("allClear");
+    show("actionRow"); show("footer");
+  } catch(e) {
+    hide("loading");
+    document.getElementById("errorMsg").textContent = `⚠ ${e.message}`; show("errorMsg");
+  } finally { btn.disabled = false; btn.textContent = "🔍 Search"; }
+}
 
-    const tooltip = L.tooltip({ sticky: true, opacity: 0.95 });
-    leafletMap._hoverTooltip = tooltip;
-    leafletMap._hoverHandler = function(e) {
-      const pt = e.latlng;
-      const hits = allMapFeatures.filter(f => f.polygon.getBounds().contains(pt));
-      if (hits.length > 0) {
-        tooltip.setContent(hits.map(h => `<b>${h.label}:</b> ${h.name}`).join("<br>"))
-          .setLatLng(pt).addTo(leafletMap);
-      } else {
-        tooltip.remove();
-      }
-    };
-    leafletMap.on("mousemove", leafletMap._hoverHandler);
-    leafletMap.on("mouseout", () => tooltip.remove());
-  }
-
-  // ── Tabs ──────────────────────────────────────────────────────────────────
-  function switchTab(tab, el) {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
-    document.getElementById("tab-" + tab).classList.add("active");
-    el.classList.add("active");
-  }
-
-  // ── Geocoding ─────────────────────────────────────────────────────────────
-  async function geocodeAddress() {
-    const query = document.getElementById("addressInput").value.trim();
-    if (!query) return;
-    const btn = document.getElementById("geocodeBtn");
-    const resultEl = document.getElementById("geocodeResult");
-    const coordsEl = document.getElementById("resolvedCoords");
-    btn.disabled = true; btn.textContent = "…";
-    resultEl.style.display = "none"; coordsEl.style.display = "none";
-    geocodedLat = null; geocodedLng = null;
-    document.getElementById("searchBtnAddress").disabled = true;
-    try {
-      const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      if (!data || data.length === 0) {
-        resultEl.className = "geocode-result error";
-        resultEl.textContent = "Address not found — try a more specific search, e.g. add town or county.";
-        resultEl.style.display = "block"; return;
-      }
-      const place = data[0];
-      geocodedLat = parseFloat(place.lat);
-      geocodedLng = parseFloat(place.lon);
-      resultEl.className = "geocode-result success";
-      resultEl.textContent = `✓ Found: ${place.display_name}`;
-      resultEl.style.display = "block";
-      coordsEl.textContent = `Coordinates: ${geocodedLat.toFixed(5)}, ${geocodedLng.toFixed(5)}`;
-      coordsEl.style.display = "block";
-      document.getElementById("searchBtnAddress").disabled = false;
-      const radius = parseInt(document.getElementById("radius-address").value);
-      showMap(geocodedLat, geocodedLng, radius);
-    } catch (e) {
-      resultEl.className = "geocode-result error";
-      resultEl.textContent = "Geocoding failed — check your connection and try again.";
-      resultEl.style.display = "block";
-    } finally {
-      btn.disabled = false; btn.textContent = "Find";
-    }
-  }
-
-  // ── Coord parsing ─────────────────────────────────────────────────────────
-  function parseCoords(val) {
-    const parts = val.trim().split(",").map(s => parseFloat(s.trim()));
-    if (parts.length !== 2 || parts.some(isNaN)) return null;
-    const [a, b] = parts;
-    if (Math.abs(a) <= 90 && Math.abs(b) <= 180) return { lat: a, lng: b };
-    if (Math.abs(b) <= 90 && Math.abs(a) <= 180) return { lat: b, lng: a };
-    return null;
-  }
-
-  function runSearchFromCoords() {
-    const coords = parseCoords(document.getElementById("coords").value);
-    if (!coords) { alert("Invalid coordinates — use: lat, lng e.g. 53.31858, -1.61388"); return; }
-    const radius = parseInt(document.getElementById("radius-coords").value);
-    showMap(coords.lat, coords.lng, radius);
-    runSearch(coords.lat, coords.lng, radius, "searchBtnCoords");
-  }
-
-  function runSearchFromAddress() {
-    if (geocodedLat == null) { alert("Please find an address first."); return; }
-    const radius = parseInt(document.getElementById("radius-address").value);
-    showMap(geocodedLat, geocodedLng, radius);
-    runSearch(geocodedLat, geocodedLng, radius, "searchBtnAddress");
-  }
-
-  // ── Core search ───────────────────────────────────────────────────────────
-  async function runSearch(lat, lng, radius, btnId) {
-    const btn = document.getElementById(btnId);
-    btn.disabled = true; btn.textContent = "⏳ Searching…";
-    show("results"); show("loading");
-    hide("errorMsg"); hide("allClear"); hide("countBadge"); hide("actionRow"); hide("footer");
-    document.getElementById("siteCards").innerHTML = "";
-    document.getElementById("resultsLabel").innerHTML =
-      `Results within ${(radius/1000).toFixed(1)} km of <code>${lat.toFixed(5)}, ${lng.toFixed(5)}</code>`;
-    document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
-
-    try {
-      const res = await fetch(`/api/sites?lat=${lat}&lng=${lng}&radius=${radius}`);
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
-      const data = await res.json();
-
-      window.lastSearchData = data;
-      window.lastSearchLat = lat;
-      window.lastSearchLng = lng;
-      window.lastSearchRadius = radius;
-
-      hide("loading");
-
-      // Draw radius results (solid) then viewport sites (lighter)
-      drawRadiusPolygons(data);
-      fetchViewportSites();
-
-      let totalFound = 0;
-      const cardsHtml = DESIGNATIONS.map(des => {
-        const features = data[des.id] || [];
-        totalFound += features.length;
-        if (features.length === 0) {
-          return `<div class="none-card" style="border-left-color:${des.color}">
-            <span class="badge" style="color:${des.color};border-color:${des.color}40">${des.label}</span>
-            <span class="none-label">${des.fullName}</span>
-            <span class="none-tag">None within radius</span>
-          </div>`;
-        }
-        const rows = features.map(f => {
-          const dist = f.distanceM != null
-            ? (f.distanceM === 0 ? `0.00 km (within site)` : `${(f.distanceM/1000).toFixed(2)} km`)
-            : null;
-          return `<div class="site-row">
-            <div class="site-row-top">
-              <div class="site-name">${f.name}</div>
-              ${dist ? `<span class="site-distance">${dist}</span>` : ""}
-            </div>
-         
-            ${f.description ? `<div class="site-desc">${f.description}</div>` : ""}
-          </div>`;
-        }).join("");
-        return `<div class="site-card" style="border-color:${des.color}30;border-left:4px solid ${des.color}">
-          <div class="site-card-header" style="background:${des.bg}">
-            <span class="badge" style="color:${des.color};border-color:${des.color}40">${des.label}</span>
-            <span class="card-title" style="color:${des.color}">${des.fullName}</span>
-            <span class="count-pill" style="background:${des.color}">${features.length} found</span>
-          </div>
-          <div class="site-card-body">${rows}</div>
-        </div>`;
-      }).join("");
-
-      document.getElementById("siteCards").innerHTML = cardsHtml;
-      const badge = document.getElementById("countBadge");
-      badge.textContent = `${totalFound} site${totalFound !== 1 ? "s" : ""} found`;
-      badge.className = `count-badge ${totalFound > 0 ? "found" : "clear"}`;
-      show("countBadge");
-      if (totalFound === 0) show("allClear");
-      show("actionRow");
-      show("footer");
-
-    } catch (e) {
-      hide("loading");
-      document.getElementById("errorMsg").textContent = `⚠ ${e.message}`;
-      show("errorMsg");
-    } finally {
-      btn.disabled = false; btn.textContent = "🔍 Search";
-    }
-  }
-
-  // ── CSV ───────────────────────────────────────────────────────────────────
-  function downloadCSV() {
-    if (!window.lastSearchData) return;
-    const lat = window.lastSearchLat;
-    const lng = window.lastSearchLng;
-    const radius = window.lastSearchRadius;
-    const rows = [
-      ["Search coordinates", `${lat.toFixed(5)}, ${lng.toFixed(5)}`],
-      ["Search radius (m)", radius],
-      [],
-      ["Designation", "Site Name", "Distance from search point"],
-    ];
-    DESIGNATIONS.forEach(des => {
-      (window.lastSearchData[des.id] || []).forEach(f => {
-        const dist = f.distanceM != null
-          ? (f.distanceM === 0 ? `0.00 km (within site)` : `${(f.distanceM/1000).toFixed(2)} km`)
-          : "";
-        rows.push([des.fullName, f.name, dist]);
-      });
+function downloadCSV() {
+  if (!window.lastSearchData) return;
+  const lat = window.lastSearchLat, lng = window.lastSearchLng, radius = window.lastSearchRadius;
+  const rows = [["Search coordinates",`${lat.toFixed(5)}, ${lng.toFixed(5)}`],["Search radius (m)",radius],[],["Designation","Site Name","Distance from search point"]];
+  const activeLayers = getActiveLayers().split(",");
+  DESIGNATIONS.filter(d => activeLayers.includes(d.id)).forEach(des => {
+    (window.lastSearchData[des.id]||[]).forEach(f => {
+      const dist = f.distanceM != null ? (f.distanceM===0 ? "0.00 km (within site)" : `${(f.distanceM/1000).toFixed(2)} km`) : "";
+      rows.push([des.fullName, f.name, dist]);
     });
-    const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `protected-sites-${lat.toFixed(5)},${lng.toFixed(5)}-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-  }
-
-  function show(id) { document.getElementById(id).classList.remove("hidden"); }
-  function hide(id) { document.getElementById(id).classList.add("hidden"); }
-
-   document.getElementById("coords").addEventListener("keydown", e => {
-    if (e.key === "Enter") runSearchFromCoords();
   });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([csv],{type:"text/csv"})), download: `protected-sites-${lat.toFixed(5)},${lng.toFixed(5)}-${new Date().toISOString().slice(0,10)}.csv` });
+  a.click();
+}
 
-  function printWithTitle() {
-    const lat = window.lastSearchLat;
-    const lng = window.lastSearchLng;
-    if (lat != null && lng != null) {
-      const prev = document.title;
-      document.title = `protected-sites-${lat.toFixed(5)},${lng.toFixed(5)}-${new Date().toISOString().slice(0,10)}`;
-      window.print();
-      document.title = prev;
-    } else {
-      window.print();
-    }
-  }
+function printWithTitle() {
+  const lat = window.lastSearchLat, lng = window.lastSearchLng;
+  if (lat != null) {
+    const prev = document.title;
+    document.title = `protected-sites-${lat.toFixed(5)},${lng.toFixed(5)}-${new Date().toISOString().slice(0,10)}`;
+    window.print(); document.title = prev;
+  } else { window.print(); }
+}
 
+function show(id) { document.getElementById(id).classList.remove("hidden"); }
+function hide(id) { document.getElementById(id).classList.add("hidden"); }
+
+document.getElementById("coords").addEventListener("keydown", e => { if (e.key==="Enter") runSearchFromCoords(); });
 </script>
-
-
-
 </body>
 </html>
