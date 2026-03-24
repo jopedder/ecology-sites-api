@@ -23,7 +23,6 @@ function distToSegmentM(pLat, pLng, a, b) {
   return haversine(pLat, pLng, a[1] + t*dy, a[0] + t*dx);
 }
 
-// Normalize ArcGIS rings or GeoJSON coordinates to array of [[lng,lat],...] rings
 function getRings(geometry) {
   if (!geometry) return [];
   if (geometry.rings) return geometry.rings;
@@ -100,16 +99,16 @@ const SOURCES = [
   { id:"np_en",      outputId:"np",     url:`${NE}/National_Parks_England/FeatureServer/0/query`,                nameField:"NAME" },
   { id:"lnr_en",     outputId:"lnr",    url:`${NE}/Local_Nature_Reserves_England/FeatureServer/0/query`,         nameField:"LNR_NAME" },
   // England optional
-  { id:"aonb_en",    outputId:"aonb",   url:`${NE}/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query`,  nameField:"NAME" },
-  { id:"lpo_en",     outputId:"lpo",    url:`${NE}/Limestone_Pavement_Orders_England/FeatureServer/0/query`,            nameField:"NAME" },
-  { id:"cp_en",      outputId:"cp",     url:`${NE}/Country_Parks_England/FeatureServer/0/query`,                        nameField:"NAME" },
-  { id:"aw_en",      outputId:"aw",     url:`${NE}/Ancient_Woodland_England/FeatureServer/0/query`,                     nameField:"NAME" },
-  { id:"phi_en",     outputId:"phi",    url:`${NE}/Priority_Habitats_Inventory_England/FeatureServer/0/query`,          nameField:"Main_Habit" },
-  { id:"wpp_en",     outputId:"wpp",    url:`${NE}/Wood_Pasture_and_Parkland/FeatureServer/0/query`,                    nameField:"NAME" },
-  { id:"to_en",      outputId:"to",     url:`${NE}/Traditional_Orchards_HAP_England/FeatureServer/0/query`,             nameField:"NAME" },
-  { id:"cr_en",      outputId:"cr",     url:`${NE}/Chalk_Rivers_England/FeatureServer/0/query`,                         nameField:"NAME" },
-  { id:"nia_en",     outputId:"nia",    url:`${NE}/Nature_Improvement_Areas_England/FeatureServer/0/query`,             nameField:"NAME" },
-  { id:"nca_en",     outputId:"nca",    url:`${NE}/National_Character_Areas_England/FeatureServer/0/query`,             nameField:"JCANAME" },
+  { id:"aonb_en",    outputId:"aonb",   url:`${NE}/Areas_of_Outstanding_Natural_Beauty_England/FeatureServer/0/query`,         nameField:"NAME" },
+  { id:"lpo_en",     outputId:"lpo",    url:`${NE}/Limestone_Pavement_Orders_England/FeatureServer/0/query`,                   nameField:"NAME" },
+  { id:"cp_en",      outputId:"cp",     url:`${NE}/Country_Parks_England/FeatureServer/0/query`,                               nameField:"NAME" },
+  { id:"aw_en",      outputId:"aw",     url:`${NE}/Ancient_Woodland_England/FeatureServer/0/query`,                            nameField:"NAME" },
+  { id:"phi_en",     outputId:"phi",    url:`${NE}/Priority_Habitats_Inventory_England/FeatureServer/0/query`,                 nameField:"Main_Habit" },
+  { id:"wpp_en",     outputId:"wpp",    url:`${NE}/Wood_Pasture_and_Parkland/FeatureServer/0/query`,                           nameField:"NAME" },
+  { id:"to_en",      outputId:"to",     url:`${NE}/Traditional_Orchards_HAP_England/FeatureServer/0/query`,                    nameField:"NAME" },
+  { id:"cr_en",      outputId:"cr",     url:`${NE}/Chalk_Rivers_England/FeatureServer/0/query`,                                nameField:"NAME" },
+  { id:"nia_en",     outputId:"nia",    url:`${NE}/Nature_Improvement_Areas_England/FeatureServer/0/query`,                    nameField:"NAME" },
+  { id:"nca_en",     outputId:"nca",    url:`${NE}/National_Character_Areas_England/FeatureServer/0/query`,                    nameField:"JCANAME" },
   // Scotland
   { id:"sssi_sc",    outputId:"sssi",   url:`${SC}/Sites_of_Special_Scientific_Interest/FeatureServer/0/query`, nameField:"NAME" },
   { id:"sac_sc",     outputId:"sac",    url:`${SC}/SAC_clip/FeatureServer/0/query`,                             nameField:"NAME" },
@@ -121,7 +120,7 @@ const SOURCES = [
   { id:"sac_wa",    outputId:"sac",    wfs:true, typeName:"inspire-nrw:NRW_SAC",    nameField:"SAC_name" },
   { id:"spa_wa",    outputId:"spa",    wfs:true, typeName:"inspire-nrw:NRW_SPA",    nameField:"SPA_Name" },
   { id:"ramsar_wa", outputId:"ramsar", wfs:true, typeName:"inspire-nrw:NRW_RAMSAR", nameField:"RAM_name" },
-  // Northern Ireland (NI ASSI maps to sssi outputId)
+  // Northern Ireland
   { id:"assi_ni",   outputId:"sssi",   url:`${NI}/ASSI/FeatureServer/0/query`,   nameField:"NAME" },
   { id:"sac_ni",    outputId:"sac",    url:`${NI}/SAC/FeatureServer/0/query`,    nameField:"NAME" },
   { id:"spa_ni",    outputId:"spa",    url:`${NI}/SPA/FeatureServer/0/query`,    nameField:"NAME" },
@@ -196,7 +195,6 @@ export default async function handler(req, res) {
     } catch(e) { return []; }
   }));
 
-  // Aggregate by outputId
   const buckets = {};
   activeSources.forEach((source, i) => {
     if (!buckets[source.outputId]) buckets[source.outputId] = [];
