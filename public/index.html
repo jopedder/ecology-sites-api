@@ -335,7 +335,7 @@ function drawRadiusPolygons(data) {
       const polygon = L.polygon(f.rings, { color: des.color, fillColor: des.fill, fillOpacity: 0.12, weight: 2, interactive: false }).addTo(leafletMap);
       radiusPolygons.push(polygon);
       legendItems.add(des.id);
-      allMapFeatures.push({ polygon, name: f.name, label: des.label, source: "radius" });
+      allMapFeatures.push({ polygon, rings: f.rings, name: f.name, label: des.label, source: "radius" });
     });
   });
   updateLegend(legendItems);
@@ -362,7 +362,7 @@ async function fetchViewportSites() {
         const polygon = L.polygon(f.rings, { color: des.color, fillColor: des.fill, fillOpacity: 0.10, weight: 1.5, dashArray: "3,4", interactive: false }).addTo(leafletMap);
         viewportPolygons.push(polygon);
         legendItems.add(des.id);
-        allMapFeatures.push({ polygon, name: f.name, label: des.label, source: "viewport" });
+        allMapFeatures.push({ polygon, rings: f.rings, name: f.name, label: des.label, source: "viewport" });
       });
     });
     updateLegend(legendItems);
@@ -384,14 +384,28 @@ function updateLegend(legendItems) {
   }
 }
 
-function refreshHoverHandler() {
+function pointInLeafletRing(lat, lng, ring) {
+    // ring is [[lat,lng],...] — proper point-in-polygon via ray casting
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [lai, lni] = ring[i], [laj, lnj] = ring[j];
+      if (((lai > lat) !== (laj > lat)) && (lng < (lnj - lni) * (lat - lai) / (laj - lai) + lni)) inside = !inside;
+    }
+    return inside;
+  }
+  function refreshHoverHandler() {
   if (!leafletMap) return;
   if (leafletMap._hoverTooltip) leafletMap._hoverTooltip.remove();
   if (leafletMap._hoverHandler) leafletMap.off("mousemove", leafletMap._hoverHandler);
   const tooltip = L.tooltip({ sticky: true, opacity: 0.95 });
   leafletMap._hoverTooltip = tooltip;
   leafletMap._hoverHandler = e => {
-    const hits = allMapFeatures.filter(f => f.polygon.getBounds().contains(e.latlng));
+    const hits = allMapFeatures.filter(f => {
+        if (!f.polygon.getBounds().contains(e.latlng)) return false;
+        if (!f.rings?.length) return true;
+        const { lat, lng } = e.latlng;
+        return f.rings.some(ring => pointInLeafletRing(lat, lng, ring));
+      });
     if (hits.length > 0) {
       tooltip.setContent(hits.map(h => `<b>${h.label}:</b> ${h.name}`).join("<br>")).setLatLng(e.latlng).addTo(leafletMap);
     } else { tooltip.remove(); }
