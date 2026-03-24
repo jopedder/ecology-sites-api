@@ -86,6 +86,7 @@ function deduplicateByName(features) {
 
 const NE = "https://services.arcgis.com/JJzESW51TqeY9uat/arcgis/rest/services";
 const SC = "https://services1.arcgis.com/LM9GyVFsughzHdbO/arcgis/rest/services";
+const SC_NP = "https://services-eu1.arcgis.com/cECIr59LclpO818r/arcgis/rest/services";
 const NI = "https://services-eu1.arcgis.com/d5l49Upuvx1Y6xxs/arcgis/rest/services";
 const WALES = "https://datamap.gov.wales/geoserver/inspire-nrw/ows";
 
@@ -115,16 +116,23 @@ const SOURCES = [
   { id:"spa_sc",     outputId:"spa",    url:`${SC}/SPA_clip/FeatureServer/0/query`,                             nameField:"NAME" },
   { id:"ramsar_sc",  outputId:"ramsar", url:`${SC}/RAMSAR_Wetlands_of_International_Importance/FeatureServer/0/query`, nameField:"NAME" },
   { id:"nnr_sc",     outputId:"nnr",    url:`${SC}/NNR_WEBSITE_DATA/FeatureServer/0/query`,                     nameField:"NAME" },
+  { id:"lnr_sc",     outputId:"lnr",    url:`${SC}/LNR_dashboard_keep_this_one/FeatureServer/0/query`,          nameField:"NAME" },
+  { id:"np_sc",      outputId:"np",     url:`${SC_NP}/Boundaries_National_Parks/FeatureServer/5/query`,         nameField:"snh_name" },
   // Wales (WFS/GeoServer)
-  { id:"sssi_wa",   outputId:"sssi",   wfs:true, typeName:"inspire-nrw:NRW_SSSI",   nameField:"sssi_name" },
-  { id:"sac_wa",    outputId:"sac",    wfs:true, typeName:"inspire-nrw:NRW_SAC",    nameField:"SAC_name" },
-  { id:"spa_wa",    outputId:"spa",    wfs:true, typeName:"inspire-nrw:NRW_SPA",    nameField:"SPA_Name" },
-  { id:"ramsar_wa", outputId:"ramsar", wfs:true, typeName:"inspire-nrw:NRW_RAMSAR", nameField:"RAM_name" },
+  { id:"sssi_wa",    outputId:"sssi",   wfs:true, typeName:"inspire-nrw:NRW_SSSI",          nameField:"sssi_name" },
+  { id:"sac_wa",     outputId:"sac",    wfs:true, typeName:"inspire-nrw:NRW_SAC",           nameField:"SAC_name" },
+  { id:"spa_wa",     outputId:"spa",    wfs:true, typeName:"inspire-nrw:NRW_SPA",           nameField:"SPA_Name" },
+  { id:"ramsar_wa",  outputId:"ramsar", wfs:true, typeName:"inspire-nrw:NRW_RAMSAR",        nameField:"RAM_name" },
+  { id:"nnr_wa",     outputId:"nnr",    wfs:true, typeName:"inspire-nrw:NRW_NNR",           nameField:"NNR_Name" },
+  { id:"lnr_wa",     outputId:"lnr",    wfs:true, typeName:"inspire-nrw:NRW_LNR",           nameField:"lnr_name" },
+  { id:"np_wa",      outputId:"np",     wfs:true, typeName:"inspire-nrw:NRW_NATIONAL_PARK", nameField:"np_name" },
+  { id:"aonb_wa",    outputId:"aonb",   wfs:true, typeName:"inspire-nrw:NRW_AONB",          nameField:"AONB_NAME" },
   // Northern Ireland
-  { id:"assi_ni",   outputId:"sssi",   url:`${NI}/ASSI/FeatureServer/0/query`,   nameField:"NAME" },
-  { id:"sac_ni",    outputId:"sac",    url:`${NI}/SAC/FeatureServer/0/query`,    nameField:"NAME" },
-  { id:"spa_ni",    outputId:"spa",    url:`${NI}/SPA/FeatureServer/0/query`,    nameField:"NAME" },
-  { id:"ramsar_ni", outputId:"ramsar", url:`${NI}/ramsar/FeatureServer/0/query`, nameField:"NAME" },
+  { id:"assi_ni",    outputId:"sssi",   url:`${NI}/ASSI/FeatureServer/0/query`,   nameField:"NAME" },
+  { id:"sac_ni",     outputId:"sac",    url:`${NI}/SAC/FeatureServer/0/query`,    nameField:"NAME" },
+  { id:"spa_ni",     outputId:"spa",    url:`${NI}/SPA/FeatureServer/0/query`,    nameField:"NAME" },
+  { id:"ramsar_ni",  outputId:"ramsar", url:`${NI}/ramsar/FeatureServer/0/query`, nameField:"NAME" },
+  { id:"aonb_ni",    outputId:"aonb",   url:`${NI}/AONB/FeatureServer/0/query`,  nameField:"NAME" },
 ];
 
 const CORE_IDS = new Set(["sssi","sac","spa","ramsar","nnr","np","lnr"]);
