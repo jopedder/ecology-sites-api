@@ -127,15 +127,15 @@
 <body>
 <div class="wrap">
   <div class="header">
-    <div class="logo">ðºï¸</div>
+    <div class="logo">🗺️</div>
     <h1>Protected Sites Finder <span class="beta-badge">BETA</span></h1>
   </div>
   <p class="subtitle">Queries Natural England, NatureScot, NRW Wales and NIEA for designated sites across the UK within your chosen radius.</p>
 
   <div class="panel print-hide">
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('coords', this)">ð Coordinates</button>
-      <button class="tab" onclick="switchTab('address', this)">ð Address search</button>
+      <button class="tab active" onclick="switchTab('coords', this)">📍 Coordinates</button>
+      <button class="tab" onclick="switchTab('address', this)">🔎 Address search</button>
     </div>
 
     <div class="tab-panel active" id="tab-coords">
@@ -197,12 +197,12 @@
       </div>
     </div>
 
-    <button class="search-btn" id="searchBtnCoords" onclick="runSearchFromCoords()">ð Search</button>
-    <button class="search-btn hidden" id="searchBtnAddress" onclick="runSearchFromAddress()">ð Search</button>
+    <button class="search-btn" id="searchBtnCoords" onclick="runSearchFromCoords()">🔍 Search</button>
+    <button class="search-btn hidden" id="searchBtnAddress" onclick="runSearchFromAddress()">🔍 Search</button>
   </div>
 
   <div class="map-section" id="mapSection">
-    <div class="map-label">ð Search location &amp; radius</div>
+    <div class="map-label">📍 Search location &amp; radius</div>
     <div id="map"></div>
     <div class="map-legend" id="mapLegend"></div>
     <p class="map-hint print-hide">Drag the pin to adjust location. Shaded areas show designated sites in the current map view. Hover to see names.</p>
@@ -213,21 +213,21 @@
       <span class="results-label" id="resultsLabel"></span>
       <span class="count-badge hidden" id="countBadge"></span>
     </div>
-    <div id="loading" class="loading hidden"><div class="spinner"></div>Fetching from designation databasesâ¦</div>
+    <div id="loading" class="loading hidden"><div class="spinner"></div>Fetching from designation databases…</div>
     <div id="errorMsg" class="error-msg hidden"></div>
     <div id="siteCards"></div>
-    <div id="allClear" class="all-clear hidden">â No designated sites found within this radius.</div>
+    <div id="allClear" class="all-clear hidden">✅ No designated sites found within this radius.</div>
     <div class="action-row hidden print-hide" id="actionRow">
-      <button class="action-btn csv-btn" onclick="downloadCSV()">â¬ Download CSV</button>
-      <button class="action-btn print-btn" onclick="printWithTitle()">ð¨ Print</button>
+      <button class="action-btn csv-btn" onclick="downloadCSV()">⬇ Download CSV</button>
+      <button class="action-btn print-btn" onclick="printWithTitle()">🖨 Print</button>
     </div>
     <div class="footer hidden" id="footer">
-      England: Natural England Â· Scotland: NatureScot Â· Wales: NRW Â· NI: NIEA Â· Distances to site boundary<br>
-      <a href="https://magic.defra.gov.uk/MagicMap.html?chosenLayers=lnrPIndex,lnrIndex,nnrPIndex,nnrIndex,nnrscoPIndex,nnrscoIndex,nnrwalPIndex,nnrwalIndex,npkIndex,ramPIndex,ramIndex,proposedRamsarP,proposedRamsar,ramscoPIndex,ramscoIndex,ramwalPIndex,ramwalIndex,siteunitPIndex,siteunitIndex,sssiPIndex,sssiIndex,sssiscoPIndex,sssiscoIndex,sssiwalPIndex,sssiwalIndex,sacPIndex,sacIndex,sacPossibleP,sacPossible,sacscoPIndex,sacscoIndex,sacwalPIndex,sacwalIndex,spaPIndex,spaIndex,spaPotentialP,spaPotential,spascoPIndex,spascoIndex,spawalPIndex,spawalIndex&box=-517221:-8754:783798:657646" target="_blank" rel="noopener">Verify on MAGIC (inc. proposed &amp; possible sites) â</a>
-      &nbsp;Â·&nbsp;
-      <a href="https://sitelink.nature.scot/" target="_blank" rel="noopener">Scotland SiteLink â</a>
-      &nbsp;Â·&nbsp;
-      <a href="https://www.daera-ni.gov.uk/topics/nature-and-biodiversity/protected-areas-and-species" target="_blank" rel="noopener">NI Protected Areas â</a>
+      England: Natural England · Scotland: NatureScot · Wales: NRW · NI: NIEA · Distances to site boundary<br>
+      <a href="https://magic.defra.gov.uk/MagicMap.html?chosenLayers=lnrPIndex,lnrIndex,nnrPIndex,nnrIndex,nnrscoPIndex,nnrscoIndex,nnrwalPIndex,nnrwalIndex,npkIndex,ramPIndex,ramIndex,proposedRamsarP,proposedRamsar,ramscoPIndex,ramscoIndex,ramwalPIndex,ramwalIndex,siteunitPIndex,siteunitIndex,sssiPIndex,sssiIndex,sssiscoPIndex,sssiscoIndex,sssiwalPIndex,sssiwalIndex,sacPIndex,sacIndex,sacPossibleP,sacPossible,sacscoPIndex,sacscoIndex,sacwalPIndex,sacwalIndex,spaPIndex,spaIndex,spaPotentialP,spaPotential,spascoPIndex,spascoIndex,spawalPIndex,spawalIndex&box=-517221:-8754:783798:657646" target="_blank" rel="noopener">Verify on MAGIC (inc. proposed &amp; possible sites) ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://sitelink.nature.scot/" target="_blank" rel="noopener">Scotland SiteLink ↗</a>
+      &nbsp;·&nbsp;
+      <a href="https://www.daera-ni.gov.uk/topics/nature-and-biodiversity/protected-areas-and-species" target="_blank" rel="noopener">NI Protected Areas ↗</a>
     </div>
   </div>
 </div>
@@ -276,7 +276,7 @@ function getActiveLayers() {
 function toggleOptional(btn) {
   const panel = document.getElementById("optional-layers");
   const expanded = panel.classList.toggle("expanded");
-  btn.textContent = expanded ? "â Additional England layers" : "+ Additional England layers";
+  btn.textContent = expanded ? "− Additional England layers" : "+ Additional England layers";
 }
 
 // Show correct search button per tab
@@ -299,7 +299,7 @@ function showMap(lat, lng, radiusM) {
   if (!leafletMap) {
     leafletMap = L.map("map", { zoomControl: true, dragging: true }).setView([lat, lng], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: 'Â© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19,
     }).addTo(leafletMap);
     leafletMap.on("moveend zoomend", () => {
       clearTimeout(bboxDebounce);
@@ -399,7 +399,7 @@ function updateLegend(legendItems) {
 }
 
 function pointInLeafletRing(lat, lng, ring) {
-    // ring is [[lat,lng],...] â proper point-in-polygon via ray casting
+    // ring is [[lat,lng],...] — proper point-in-polygon via ray casting
     let inside = false;
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
       const [lai, lni] = ring[i], [laj, lnj] = ring[j];
@@ -434,7 +434,7 @@ async function geocodeAddress() {
   const btn = document.getElementById("geocodeBtn");
   const resultEl = document.getElementById("geocodeResult");
   const coordsEl = document.getElementById("resolvedCoords");
-  btn.disabled = true; btn.textContent = "â¦";
+  btn.disabled = true; btn.textContent = "…";
   resultEl.style.display = "none"; coordsEl.style.display = "none";
   geocodedLat = null; geocodedLng = null;
   document.getElementById("searchBtnAddress").disabled = true;
@@ -444,7 +444,7 @@ async function geocodeAddress() {
     if (!data?.length) { resultEl.className = "geocode-result error"; resultEl.textContent = "Address not found."; resultEl.style.display = "block"; return; }
     geocodedLat = parseFloat(data[0].lat); geocodedLng = parseFloat(data[0].lon);
     resultEl.className = "geocode-result success";
-    resultEl.textContent = `â Found: ${data[0].display_name}`;
+    resultEl.textContent = `✓ Found: ${data[0].display_name}`;
     resultEl.style.display = "block";
     coordsEl.textContent = `Coordinates: ${geocodedLat.toFixed(5)}, ${geocodedLng.toFixed(5)}`;
     coordsEl.style.display = "block";
@@ -466,7 +466,7 @@ function parseCoords(val) {
 
 function runSearchFromCoords() {
   const coords = parseCoords(document.getElementById("coords").value);
-  if (!coords) { alert("Invalid coordinates â use: lat, lng"); return; }
+  if (!coords) { alert("Invalid coordinates — use: lat, lng"); return; }
   const radius = parseInt(document.getElementById("radius-coords").value);
   showMap(coords.lat, coords.lng, radius);
   runSearch(coords.lat, coords.lng, radius, "searchBtnCoords");
@@ -480,7 +480,7 @@ function runSearchFromAddress() {
 
 async function runSearch(lat, lng, radius, btnId) {
   const btn = document.getElementById(btnId);
-  btn.disabled = true; btn.textContent = "â³ Searchingâ¦";
+  btn.disabled = true; btn.textContent = "⏳ Searching…";
   show("results"); show("loading");
   hide("errorMsg"); hide("allClear"); hide("countBadge"); hide("actionRow"); hide("footer");
   document.getElementById("siteCards").innerHTML = "";
@@ -529,8 +529,8 @@ async function runSearch(lat, lng, radius, btnId) {
     show("actionRow"); show("footer");
   } catch(e) {
     hide("loading");
-    document.getElementById("errorMsg").textContent = `â  ${e.message}`; show("errorMsg");
-  } finally { btn.disabled = false; btn.textContent = "ð Search"; }
+    document.getElementById("errorMsg").textContent = `⚠ ${e.message}`; show("errorMsg");
+  } finally { btn.disabled = false; btn.textContent = "🔍 Search"; }
 }
 
 function downloadCSV() {
